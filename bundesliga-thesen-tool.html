@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>bundesliga-thesen-tool</title>
+  <meta name="description" content="Rasenschach – gespiegeltes Team-Board mit Thesenpool, Spielerbibliothek, Münzwurf, Punktediagramm und Spielertabellen." />
+  <link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&f[]=cabinet-grotesk@500,700,800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --text-xs:clamp(.74rem,.7rem + .2vw,.86rem);--text-sm:clamp(.88rem,.82rem + .25vw,1rem);--text-base:clamp(1rem,.95rem + .22vw,1.08rem);--text-lg:clamp(1.15rem,1rem + .6vw,1.45rem);--text-xl:clamp(1.7rem,1.1rem + 1.4vw,2.7rem);--text-2xl:clamp(2.4rem,1.4rem + 2.8vw,4.4rem);
+      --bg:#060606;--surface:#101010;--surface-2:#181818;--surface-3:#222222;--border:#2d2d2d;--text:#f3f3f3;--muted:#b5b5b5;--faint:#7b7b7b;
+      --board-dark:#0c0c0c;--board-light:#d8d8d8;--outline:rgba(255,255,255,.08);--accent:#8c71ff;--green:#39c772;--blue:#4cb9e8;
+      --radius-sm:.42rem;--radius-md:.8rem;--radius-lg:1.15rem;--radius-xl:1.75rem;--radius-full:9999px;
+      --shadow-sm:0 1px 2px rgba(0,0,0,.24);--shadow-md:0 14px 38px rgba(0,0,0,.34);--shadow-lg:0 24px 70px rgba(0,0,0,.45);
+      --font-body:'General Sans',Inter,sans-serif;--font-display:'Cabinet Grotesk',Inter,sans-serif;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html{-webkit-text-size-adjust:none;text-size-adjust:none}
+    body{min-height:100dvh;background:radial-gradient(circle at top,#202020 0%,#0f0f0f 42%,#050505 100%);color:var(--text);font-family:var(--font-body);font-size:var(--text-base);line-height:1.4}
+    button,textarea,input,select{font:inherit;color:inherit} button{cursor:pointer;border:0;background:none}
+    table{border-collapse:collapse;width:100%}
+    :focus-visible{outline:2px solid #fff;outline-offset:3px;border-radius:var(--radius-sm)}
+    .app{width:min(calc(100% - 1rem),1580px);margin:0 auto;padding:.7rem}
+    .topbar{display:flex;justify-content:space-between;align-items:center;gap:1rem;margin-bottom:1rem}
+    .brand{display:flex;align-items:center;gap:.9rem}.brand-mark{width:3.2rem;height:3.2rem;border-radius:1rem;background:linear-gradient(135deg,#f1f1f1,#909090);display:grid;place-items:center;color:#0f0f0f;box-shadow:var(--shadow-sm)}
+    .brand small{display:block;color:var(--muted);font-size:var(--text-xs);text-transform:uppercase;letter-spacing:.14em}.brand h1{font-family:var(--font-display);font-size:var(--text-xl);line-height:1}
+    .actions{display:flex;gap:.75rem;align-items:center}.ghost-btn,.primary-btn{min-height:46px;padding:.8rem 1rem;border-radius:var(--radius-full);display:inline-flex;align-items:center;justify-content:center;gap:.5rem}
+    .ghost-btn{background:var(--surface);border:1px solid var(--border)}.primary-btn{background:#f0f0f0;color:#0f0f0f;font-weight:800;box-shadow:var(--shadow-sm)}
+    .layout{display:grid;grid-template-columns:1.08fr .92fr;gap:1rem;align-items:start}
+    .board-shell,.side-card{background:rgba(17,17,17,.94);border:1px solid var(--border);box-shadow:var(--shadow-md)}
+    .board-shell{border-radius:var(--radius-xl);padding:1rem}.side-card{border-radius:var(--radius-xl);padding:1rem}
+    .headline{display:flex;justify-content:space-between;gap:1rem;align-items:end;margin-bottom:1rem}
+    .headline h2{font-family:var(--font-display);font-size:var(--text-2xl);line-height:.9}.headline p{max-width:50ch;color:var(--muted)}
+    .arena{display:grid;gap:.65rem}.phase-pill{justify-self:center;display:inline-flex;align-items:center;gap:.45rem;padding:.45rem .8rem;border-radius:var(--radius-full);background:var(--surface-2);border:1px solid #2f2f2f;color:var(--muted);font-size:var(--text-xs);text-transform:uppercase;letter-spacing:.12em}
+    .team-label{display:flex;justify-content:center;align-items:center;padding:.35rem 0 .1rem;font-family:var(--font-display);font-size:clamp(2.2rem,1.4rem + 2vw,4rem);letter-spacing:.01em}
+    .field-row,.figure-row{display:grid;grid-template-columns:repeat(5,1fr);gap:0}.pool-row{display:grid;grid-template-columns:repeat(6,1fr);gap:0}
+    .cell{border:1px solid var(--outline);position:relative;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease}
+    .field-cell{min-height:126px;padding:.35rem .25rem;cursor:pointer}.field-cell.dark{background:var(--board-dark);color:#f2f2f2}.field-cell.light{background:var(--board-light);color:#111}
+    .field-main{font-family:var(--font-display);font-size:3rem;line-height:.9}.field-sub{font-size:.95rem;font-weight:800;margin-top:.15rem}
+    .figure-cell{min-height:186px;background:var(--board-light);color:#111;padding:.38rem;display:grid;grid-template-rows:1fr auto auto;align-items:stretch}
+    .figure-slot{width:100%;height:100%;border-radius:.35rem;border:1px dashed rgba(0,0,0,.18);display:grid;place-items:center;align-content:center;gap:.28rem;background:linear-gradient(180deg,rgba(255,255,255,.38),rgba(0,0,0,.02));padding:.35rem}
+    .figure-slot strong{font-size:2.25rem;line-height:1}.figure-slot span{font-size:var(--text-xs);font-weight:700;color:#555;text-align:center;padding-inline:.2rem}
+    .figure-preview{width:100%;aspect-ratio:1/1;border-radius:.55rem;overflow:hidden;background:rgba(0,0,0,.08);display:none}.figure-preview img{width:100%;height:100%;object-fit:cover}.figure-preview.active{display:block}
+    .figure-actions{display:flex;gap:.35rem;margin-top:.35rem}.mini-btn{flex:1;min-height:34px;border-radius:.55rem;background:rgba(255,255,255,.72);border:1px solid rgba(0,0,0,.1);font-size:.72rem;color:#111}.remove-thesis-btn{margin-top:.55rem;min-height:34px;padding:.45rem .6rem;border-radius:.65rem;background:#151515;border:1px solid #2d2d2d;color:#d8d8d8;font-size:.74rem;width:100%}
+    .figure-label-input{margin-top:.32rem;width:100%;border:1px solid rgba(0,0,0,.18);background:rgba(255,255,255,.82);border-radius:.35rem;padding:.33rem .38rem;font-size:.76rem;text-align:center;color:#111}
+    .pool-cell{min-height:160px;padding:.35rem;background:var(--board-light);color:#161616;align-items:stretch;justify-content:stretch}.pool-cell.dark{background:var(--board-dark);color:#f1f1f1}
+    .thesis-card{width:100%;height:100%;border-radius:.22rem;padding:.45rem;display:grid;place-items:center;text-align:center;background:transparent}.thesis-text{font-size:.78rem;line-height:1.2;color:#6f6f6f;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:7;overflow:hidden;text-align:center}
+    .pool-cell.dark .thesis-text,.field-cell.dark .thesis-text{color:#b7b7b7}.placeholder{opacity:.35;color:inherit!important;font-weight:700;display:grid;place-items:center;text-align:center}
+    .drop.dragover{box-shadow:inset 0 0 0 3px rgba(255,255,255,.34);z-index:2}.divider-line{height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.2),transparent);margin:.2rem 0}
+    .side-card h3{font-family:var(--font-display);font-size:var(--text-lg)}.side-card p{color:var(--muted);font-size:var(--text-sm);margin-top:.35rem}
+    .label{display:block;font-size:var(--text-sm);font-weight:800;color:var(--muted);margin:.9rem 0 .45rem}
+    .textarea,.search-input,.stat-input{width:100%;background:#0d0d0d;border:1px solid var(--border);border-radius:var(--radius-md);padding:.9rem .95rem;color:var(--text)}.textarea{min-height:120px;resize:vertical}.stat-input{padding:.55rem .65rem;border-radius:.65rem}
+    .library-head{display:flex;justify-content:space-between;gap:.75rem;align-items:center;flex-wrap:wrap;margin-top:1rem}.upload-btn{position:relative;overflow:hidden}.upload-btn input{position:absolute;inset:0;opacity:0;cursor:pointer}
+    .player-grid{display:grid;grid-template-columns:1fr;gap:.5rem;max-height:26rem;overflow:auto;margin-top:1rem}.player-card{background:var(--surface-2);border:1px solid #2a2a2a;border-radius:var(--radius-lg);padding:.65rem;display:grid;gap:.3rem}
+    .player-empty{border-radius:.75rem;display:grid;place-items:center;color:var(--faint);background:#0d0d0d;border:1px dashed #333;font-size:var(--text-xs);text-align:center;padding:.85rem}
+    .player-card strong{font-size:var(--text-sm)}.player-card span{font-size:var(--text-xs);color:var(--muted)}.player-drag{width:100%;text-align:left;cursor:grab;display:grid;gap:.18rem}.player-drag:active{cursor:grabbing}
+    .thesis-list{display:grid;gap:.65rem;max-height:20rem;overflow:auto;margin-top:1rem;padding-right:.15rem}.list-item{padding:.85rem;border-radius:var(--radius-lg);background:var(--surface-2);border:1px solid #2a2a2a}
+    .list-item.active{outline:2px solid rgba(255,255,255,.45);outline-offset:2px}.list-btn{width:100%;text-align:left;cursor:grab}.list-btn:active{cursor:grabbing}.list-item strong{display:block;font-size:var(--text-sm);margin-bottom:.2rem}.list-item span{font-size:var(--text-sm);color:var(--muted);display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+    .editor-actions{display:flex;gap:.75rem;margin-top:1rem;flex-wrap:wrap}.rating-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:.5rem;margin-top:1rem}.rating-btn{min-height:52px;border-radius:var(--radius-md);font-weight:800;background:var(--surface-2);border:1px solid #303030}.rating-btn.active{background:#f0f0f0;color:#0d0d0d;border-color:transparent}
+    .meta-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.6rem;margin-top:1rem}.meta-card{padding:.8rem;border-radius:var(--radius-lg);background:var(--surface-2);border:1px solid #2a2a2a}.meta-card strong{display:block;font-size:var(--text-xl);font-family:var(--font-display)}.meta-card span{font-size:var(--text-sm);color:var(--muted)}
+    .bottom-tools{display:grid;grid-template-columns:1fr 1.2fr;gap:1rem;margin-top:1rem}.coin-box,.chart-box,.table-box{background:rgba(17,17,17,.94);border:1px solid var(--border);box-shadow:var(--shadow-md);border-radius:var(--radius-xl);padding:1rem}
+    .coin-result{margin-top:1rem;display:grid;place-items:center;min-height:92px;border-radius:var(--radius-lg);background:var(--surface-2);font-family:var(--font-display);font-size:2rem}
+    .chart-box{display:grid;gap:1rem}.chart-inputs{display:grid;grid-template-columns:repeat(2,1fr);gap:.75rem}.chart-row{display:grid;gap:.45rem}.bar-stage{display:grid;gap:.8rem}.bar-line{display:grid;grid-template-columns:110px 1fr 60px;gap:.7rem;align-items:center}.bar-track{height:18px;border-radius:999px;background:#0d0d0d;border:1px solid #272727;overflow:hidden}.bar-fill{height:100%;border-radius:999px}.bar-fill.alman{background:linear-gradient(90deg,var(--green),#8cf0b5)}.bar-fill.aus{background:linear-gradient(90deg,var(--blue),#9ee6ff)}
+    .table-wrap{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1rem}.table-box table th,.table-box table td{padding:.55rem .45rem;border-bottom:1px solid #292929;text-align:left;font-size:var(--text-sm)}.table-box table th{color:var(--muted);font-weight:700}
+    .table-title{font-family:var(--font-display);font-size:1.45rem;margin-bottom:.6rem}
+    @media (max-width: 1260px){.layout,.bottom-tools,.table-wrap{grid-template-columns:1fr}.headline{display:grid}}
+    @media (max-width: 900px){.topbar{display:grid}.actions{flex-wrap:wrap}.field-main{font-size:2.15rem}.pool-cell{min-height:126px}.figure-cell{min-height:166px}.meta-grid,.rating-grid,.chart-inputs{grid-template-columns:1fr}}
+    @media (max-width: 700px){.app{width:min(calc(100% - .4rem),100%);padding:.35rem}.pool-row{grid-template-columns:repeat(3,1fr)}.pool-cell{min-height:112px}.player-grid{grid-template-columns:1fr}.bar-line{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">
+          <svg width="28" height="28" viewBox="0 0 48 48" fill="none">
+            <path d="M14 34V20h20v14" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"/>
+            <path d="M18 20v-5.5h12V20" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"/>
+            <path d="M12 34h24" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div>
+          <small>Studio Board</small>
+          <h1>Rasenschach</h1>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="ghost-btn" type="button" id="fillDemoBtn">Demo füllen</button>
+        <button class="ghost-btn" type="button" id="saveStateBtn">Stand speichern</button>
+        <label class="ghost-btn upload-btn">Stand laden<input id="loadStateInput" type="file" accept="application/json,.json" /></label>
+        <button class="ghost-btn" type="button" id="clearBtn">Alles leeren</button>
+      </div>
+    </header>
+
+    <div class="layout">
+      <section>
+        <section class="board-shell">
+          <div class="headline">
+            <div>
+              <h2>Finales Board-Layout</h2>
+            </div>
+            <p>Jetzt liegen bei beiden Teams die Figuren ganz außen und die Zahlenfelder näher am Thesenpool in der Mitte. Das entspricht genau deiner Korrektur für den gespiegelten Alman-/Ausländer-Aufbau. [page:12]</p>
+          </div>
+
+          <div class="arena">
+            <div class="phase-pill">Figurenphase außen</div>
+            <div class="team-label">Alman</div>
+            <div class="figure-row" id="topFigures"></div>
+            <div class="field-row" id="topFields"></div>
+            <div class="divider-line"></div>
+            <div class="phase-pill">Draft-Phase im Pool</div>
+            <div class="pool-row" id="poolRowA"></div>
+            <div class="pool-row" id="poolRowB"></div>
+            <div class="divider-line"></div>
+            <div class="field-row" id="bottomFields"></div>
+            <div class="figure-row" id="bottomFigures"></div>
+            <div class="team-label">Ausländer</div>
+            <div class="phase-pill">Figurenphase außen</div>
+          </div>
+        </section>
+
+        <section class="bottom-tools">
+          <div class="coin-box">
+            <h3>Münzwurf</h3>
+            <p style="color:var(--muted);margin-top:.35rem">Per Klick entscheidest du, ob Kopf oder Zahl fällt. Das hilft für Startrecht oder Sonderregeln. [page:12]</p>
+            <div class="editor-actions">
+              <button class="primary-btn" type="button" id="coinBtn">Münze werfen</button>
+            </div>
+            <div class="coin-result"><div class="coin-inner" id="coinInner"><span id="coinResult">?</span></div></div>
+          </div>
+
+          <div class="chart-box">
+            <div>
+              <h3>Punktediagramm</h3>
+              <p style="color:var(--muted);margin-top:.35rem">Hier kannst du die Team-Punkte eintragen und direkt als konkurrierende Balken sehen. [page:12]</p>
+            </div>
+            <div class="chart-inputs">
+              <div class="chart-row">
+                <label class="label" for="scoreAlman">Punkte Alman</label>
+                <input id="scoreAlman" class="stat-input" type="number" value="0" />
+              </div>
+              <div class="chart-row">
+                <label class="label" for="scoreAus">Punkte Ausländer</label>
+                <input id="scoreAus" class="stat-input" type="number" value="0" />
+              </div>
+            </div>
+            <div class="bar-stage">
+              <div class="bar-line"><strong>Alman</strong><div class="bar-track"><div class="bar-fill alman" id="barAlman" style="width:0%"></div></div><span id="labelAlman">0</span></div>
+              <div class="bar-line"><strong>Ausländer</strong><div class="bar-track"><div class="bar-fill aus" id="barAus" style="width:0%"></div></div><span id="labelAus">0</span></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="wheel-box">
+          <h3>Zufallswert fürs Fragezeichenfeld</h3>
+          <p style="color:var(--muted);margin-top:.35rem">Hier läuft es wieder bewusst einfach: Du drückst auf den Button, dann steht kurz „Dreht...“ da, und danach erscheint direkt der gezogene Wert. Kurze Zustandswechsel lassen sich im Browser zuverlässig mit setTimeout() steuern, und einfache CSS-Transitions sind breit unterstützt. [page:2][page:1]</p>
+          <div class="editor-actions">
+            <button class="primary-btn" type="button" id="spinBtn">Zufallswert ziehen</button>
+          </div>
+          <div class="wheel-result-card" style="margin-top:.85rem">
+            <strong style="display:block;font-size:var(--text-sm);color:var(--muted);margin-bottom:.35rem">Ergebnis</strong>
+            <div id="wheelResult" style="font-family:var(--font-display);font-size:var(--text-xl)">Noch nicht gedreht</div>
+          </div>
+          <div class="wheel-chips" id="wheelLegend" style="margin-top:.85rem"></div>
+        </section>
+
+        <section class="coin-box" style="margin-top:1rem">
+          <h3>Restthesen</h3>
+          <p style="color:var(--muted);margin-top:.35rem">Hier bleiben die letzten zwei offenen Thesen sichtbar, bevor sie auf Felder verteilt werden. [page:12]</p>
+          <div id="remainingTheses" class="rest-grid"></div>
+        </section>
+
+        <section class="table-wrap">
+          <div class="table-box">
+            <div class="table-title">Spielerstatistik Alman</div>
+            <table>
+              <thead>
+                <tr><th>Spieler</th><th>Punkte</th></tr>
+              </thead>
+              <tbody id="tableAlman"></tbody>
+            </table>
+          </div>
+          <div class="table-box">
+            <div class="table-title">Spielerstatistik Ausländer</div>
+            <table>
+              <thead>
+                <tr><th>Spieler</th><th>Punkte</th></tr>
+              </thead>
+              <tbody id="tableAus"></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+
+      <aside style="display:grid;gap:1rem">
+        <section class="side-card">
+          <h3>Spieler-Bibliothek</h3>
+          <p>Hier kannst du weiter Bilder hochladen, nach Spielern suchen und die Einträge direkt auf die Figurenfelder ziehen. Die Reihenfolge bleibt sonst wie in der vorherigen funktionierenden Version. [page:1]</p>
+          <div class="library-head">
+            <input id="playerSearch" class="search-input" type="search" placeholder="Spieler suchen" />
+            <label class="ghost-btn upload-btn">Bilder hochladen<input id="playerUpload" type="file" accept="image/*" multiple /></label>
+          </div>
+          <div class="player-grid" id="playerGrid"></div>
+        </section>
+
+        <section class="side-card">
+          <h3>Neue These</h3>
+          <p>Die Mitte bleibt der Großpool aus zwei Reihen, weil dort laut deinem Spielkonzept die Thesen von beiden Teams nacheinander gezogen werden. [page:10]</p>
+          <label class="label" for="newThesis">These eingeben</label>
+          <textarea id="newThesis" class="textarea" placeholder="Zum Beispiel: Der HSV bleibt im April sieglos"></textarea>
+          <div class="editor-actions">
+            <button class="primary-btn" type="button" id="addBtn">These hinzufügen</button>
+          </div>
+          <div class="meta-grid">
+            <div class="meta-card"><strong id="countAll">0</strong><span>Thesen</span></div>
+            <div class="meta-card"><strong id="countPlaced">0</strong><span>platziert</span></div>
+            <div class="meta-card"><strong id="countPositive">0</strong><span>positiv</span></div>
+            <div class="meta-card"><strong id="countNegative">0</strong><span>negativ</span></div>
+          </div>
+        </section>
+
+        <section class="side-card">
+          <h3>Bearbeiten</h3>
+          <p id="editorInfo">Wähle eine These aus, dann kannst du Text und Wertung ändern. [page:10]</p>
+          <label class="label" for="selectedText">Text bearbeiten</label>
+          <textarea id="selectedText" class="textarea" placeholder="Hier erscheint die ausgewählte These"></textarea>
+          <div class="rating-grid" id="ratingGrid"></div>
+          <div class="editor-actions">
+            <button class="ghost-btn" type="button" id="deleteBtn">These löschen</button>
+            <button class="primary-btn" type="button" id="saveBtn">Speichern</button>
+          </div>
+        </section>
+
+        <section class="side-card">
+          <h3>Thesenliste</h3>
+          <p>Du kannst jede These aus dem Pool oder aus der Liste auf die Teamfelder ziehen. [page:10]</p>
+          <div class="thesis-list" id="thesisList"></div>
+        </section>
+      </aside>
+    </div></div>
+  </div>
+
+  <script>
+    const theses = [];
+    const placements = {};
+    let selectedId = null;
+
+    const fieldNames = ['+/− 3', '−1', '?', '+1', '−/+ 3'];
+    const figureDefs = [
+      { icon: '♜', label: 'Turm' },
+      { icon: '♞', label: 'Springer' },
+      { icon: '♝', label: 'Läufer' },
+      { icon: '♛', label: 'Dame' },
+      { icon: '♚', label: 'König' }
+    ];
+    const figureLabels = ['Turm','Springer','Läufer','Dame','König','Turm','Springer','Läufer','Dame','König'];
+    const figureImages = Array(10).fill(null);
+    const players = [
+      { id:'p1', name:'Harry Kane', club:'Bayern', image:'https://images.unsplash.com/photo-1517466787929-bc90951d0974?auto=format&fit=crop&w=800&q=80' },
+      { id:'p2', name:'Chris Führich', club:'Stuttgart', image:'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80' },
+      { id:'p3', name:'Granit Xhaka', club:'Leverkusen', image:'https://images.unsplash.com/photo-1542038784456-1ea8e935640e?auto=format&fit=crop&w=800&q=80' },
+      { id:'p4', name:'Nick Woltemade', club:'Stuttgart', image:'https://images.unsplash.com/photo-1496347646636-ea47f7d6b37b?auto=format&fit=crop&w=800&q=80' }
+    ];
+    const almanStats = [
+      { player: 'Moritz', punkte: '' },
+      { player: 'Lukas', punkte: '' },
+      { player: 'Johannes', punkte: '' }
+    ];
+    const ausStats = [
+      { player: 'Kevin', punkte: '' },
+      { player: 'David', punkte: '' },
+      { player: 'Fischer', punkte: '' }
+    ];
+    const scoreOptions = [
+      { value: -3, label: '-3' },
+      { value: -1, label: '-1' },
+      { value: 0, label: '?' },
+      { value: 1, label: '+1' },
+      { value: 3, label: '+3' }
+    ];
+    const wheelSegments = ['+1', '-1', '+2', '-2', 'Joker', '+/-3', '-/+3', '+1'];
+    let wheelRotation = 0;
+    let questionFieldResult = '?';
+    const autosaveKey = 'rasenschach-autosave-v1';
+
+    const topFields = document.getElementById('topFields');
+    const bottomFields = document.getElementById('bottomFields');
+    const topFigures = document.getElementById('topFigures');
+    const bottomFigures = document.getElementById('bottomFigures');
+    const poolRowA = document.getElementById('poolRowA');
+    const poolRowB = document.getElementById('poolRowB');
+    const newThesis = document.getElementById('newThesis');
+    const addBtn = document.getElementById('addBtn');
+    const thesisList = document.getElementById('thesisList');
+    const selectedText = document.getElementById('selectedText');
+    const ratingGrid = document.getElementById('ratingGrid');
+    const deleteBtn = document.getElementById('deleteBtn');
+    const saveBtn = document.getElementById('saveBtn');
+    const editorInfo = document.getElementById('editorInfo');
+    const playerGrid = document.getElementById('playerGrid');
+    const saveStateBtn = document.getElementById('saveStateBtn');
+    const loadStateInput = document.getElementById('loadStateInput');
+    const playerSearch = document.getElementById('playerSearch');
+    const playerUpload = document.getElementById('playerUpload');
+    const coinBtn = document.getElementById('coinBtn');
+    const coinResult = document.getElementById('coinResult');
+    const scoreAlman = document.getElementById('scoreAlman');
+    const scoreAus = document.getElementById('scoreAus');
+    const coinInner = document.getElementById('coinInner');
+    const remainingTheses = document.getElementById('remainingTheses');
+    const wheelResult = document.getElementById('wheelResult');
+    const spinBtn = document.getElementById('spinBtn');
+    const wheelLegend = document.getElementById('wheelLegend');
+
+    function getThesis(id){ return theses.find(t => t.id === id); }
+    function locationOf(id){ return Object.entries(placements).find(([, value]) => value === id)?.[0] || null; }
+    function scoreText(value){ if(value === null || value === undefined) return 'offen'; if(value === 0) return '?'; return value > 0 ? `+${value}` : String(value); }
+
+    function buildState(){
+      return {
+        theses,
+        placements,
+        figureLabels,
+        figureImages,
+        almanStats,
+        ausStats,
+        scoreAlman: scoreAlman.value,
+        scoreAus: scoreAus.value,
+        questionFieldResult
+      };
+    }
+
+    function applyState(state){
+      theses.splice(0, theses.length, ...((state && state.theses) || []));
+      Object.keys(placements).forEach(key => delete placements[key]);
+      Object.assign(placements, (state && state.placements) || {});
+
+      figureLabels.splice(0, figureLabels.length, ...((state && state.figureLabels) || figureLabels));
+      figureImages.splice(0, figureImages.length, ...((state && state.figureImages) || figureImages));
+
+      almanStats.splice(0, almanStats.length, ...((state && state.almanStats) || almanStats));
+      ausStats.splice(0, ausStats.length, ...((state && state.ausStats) || ausStats));
+
+      scoreAlman.value = state?.scoreAlman ?? 0;
+      scoreAus.value = state?.scoreAus ?? 0;
+      questionFieldResult = state?.questionFieldResult ?? '?';
+      selectedId = null;
+      renderAll();
+    }
+
+    function autosave(){
+      try {
+        localStorage.setItem(autosaveKey, JSON.stringify(buildState()));
+      } catch (error) {}
+    }
+
+    function tryAutoload(){
+      try {
+        const raw = localStorage.getItem(autosaveKey);
+        if (!raw) return;
+        applyState(JSON.parse(raw));
+      } catch (error) {}
+    }
+
+    function attachDrop(node, placeId){
+      node.classList.add('drop');
+      node.addEventListener('dragover', (event) => { event.preventDefault(); node.classList.add('dragover'); });
+      node.addEventListener('dragleave', () => node.classList.remove('dragover'));
+      node.addEventListener('drop', (event) => {
+        event.preventDefault();
+        node.classList.remove('dragover');
+        const playerId = event.dataTransfer.getData('application/player-id');
+        if (playerId) return;
+        const id = event.dataTransfer.getData('text/plain');
+        if(!id) return;
+        const from = locationOf(id);
+        if(from) delete placements[from];
+        const existing = placements[placeId];
+        placements[placeId] = id;
+        if(existing && from) placements[from] = existing;
+        selectedId = id;
+        renderAll();
+      });
+    }
+
+    function displayFieldLabel(label){
+      return label === '?' ? questionFieldResult : label;
+    }
+
+    function fieldCell(label, id, dark){
+      const cell = document.createElement('div');
+      cell.className = `cell field-cell ${dark ? 'dark' : 'light'}`;
+      const thesis = getThesis(placements[id]);
+      const shownLabel = displayFieldLabel(label);
+      cell.innerHTML = thesis
+        ? `<div class="field-main" style="font-size:2rem">${shownLabel}</div><div class="thesis-text" style="margin-top:.45rem;font-size:.72rem;padding:0 .2rem">${thesis.text}</div>`
+        : `<div class="field-main">${shownLabel}</div><div class="field-sub">Drop</div>`;
+      attachDrop(cell, id);
+      return cell;
+    }
+
+    function updateFigureFromPlayer(stateIndex, player) {
+      figureImages[stateIndex] = player.image;
+      figureLabels[stateIndex] = player.name;
+      renderAll();
+    }
+
+    function figureCell(def, id, stateIndex){
+      const cell = document.createElement('div');
+      cell.className = 'cell figure-cell';
+      const thesis = getThesis(placements[id]);
+      const img = figureImages[stateIndex];
+      cell.innerHTML = `
+        <div class="figure-slot">
+          <div class="figure-preview ${img ? 'active' : ''}">${img ? `<img src="${img}" alt="Spielerbild" />` : ''}</div>
+          <strong>${def.icon}</strong>
+          <span>${thesis ? thesis.text.slice(0,28) : 'Spielerbild oder These ablegen'}</span>
+        </div>
+        <div class="figure-actions">
+          <button type="button" class="mini-btn" data-action="remove">Entfernen</button>
+        </div>
+        <input class="figure-label-input" value="${figureLabels[stateIndex]}" maxlength="24" />
+      `;
+      attachDrop(cell, id);
+      cell.addEventListener('drop', (event) => {
+        const playerId = event.dataTransfer.getData('application/player-id');
+        if (playerId) {
+          const player = players.find(entry => entry.id === playerId);
+          if (player) updateFigureFromPlayer(stateIndex, player);
+        }
+      });
+      cell.querySelector('[data-action="remove"]').addEventListener('click', () => {
+        figureImages[stateIndex] = null;
+        renderAll();
+      });
+      cell.querySelector('input').addEventListener('input', (event) => {
+        figureLabels[stateIndex] = event.target.value;
+      });
+      return cell;
+    }
+
+    function poolCell(index){
+      const placeId = `pool-${index}`;
+      const thesis = getThesis(placements[placeId]);
+      const dark = index % 2 === 1;
+      const cell = document.createElement('div');
+      cell.className = `cell pool-cell ${dark ? 'dark' : ''}`;
+      cell.innerHTML = thesis
+        ? `<button type="button" class="thesis-card" draggable="true"><div class="thesis-text">${thesis.text}</div></button>`
+        : `<div class="thesis-card placeholder">Freies Thesenfeld</div>`;
+      if(thesis){
+        const btn = cell.querySelector('button');
+        btn.addEventListener('click', () => { selectedId = thesis.id; renderAll(); });
+        btn.addEventListener('dragstart', (event) => { event.dataTransfer.setData('text/plain', thesis.id); });
+      }
+      attachDrop(cell, placeId);
+      return cell;
+    }
+
+    function renderPlayers(){
+      const query = playerSearch.value.trim().toLowerCase();
+      const filtered = players.filter(player => `${player.name} ${player.club}`.toLowerCase().includes(query));
+      playerGrid.innerHTML = '';
+      if(!filtered.length){
+        playerGrid.innerHTML = '<div class="player-card"><div class="player-empty">Keine Spieler gefunden</div><strong>Suche anpassen</strong><span>Oder neue Bilder hochladen</span></div>';
+        return;
+      }
+      filtered.forEach(player => {
+        const card = document.createElement('div');
+        card.className = 'player-card';
+        card.innerHTML = `
+          <button type="button" class="player-drag" draggable="true">
+            <strong>${player.name}</strong>
+            <span>${player.club}</span>
+          </button>
+        `;
+        const btn = card.querySelector('button');
+        btn.addEventListener('dragstart', (event) => {
+          event.dataTransfer.setData('application/player-id', player.id);
+        });
+        playerGrid.appendChild(card);
+      });
+    }
+
+    function renderBoard(){
+      topFields.innerHTML = ''; bottomFields.innerHTML = ''; topFigures.innerHTML = ''; bottomFigures.innerHTML = ''; poolRowA.innerHTML = ''; poolRowB.innerHTML = '';
+      figureDefs.forEach((def, index) => topFigures.appendChild(figureCell(def, `top-figure-${index}`, index)));
+      fieldNames.forEach((name, index) => topFields.appendChild(fieldCell(name, `top-field-${index}`, index % 2 === 0)));
+      for(let i=0;i<6;i++) poolRowA.appendChild(poolCell(i));
+      for(let i=6;i<12;i++) poolRowB.appendChild(poolCell(i));
+      fieldNames.forEach((name, index) => bottomFields.appendChild(fieldCell(name, `bottom-field-${index}`, index % 2 === 0)));
+      figureDefs.forEach((def, index) => bottomFigures.appendChild(figureCell(def, `bottom-figure-${index}`, index + 5)));
+    }
+
+    function renderList(){
+      thesisList.innerHTML = '';
+      if(!theses.length){
+        thesisList.innerHTML = '<div class="list-item"><button type="button" class="list-btn"><strong>Noch keine Thesen</strong><span>Füge links deine erste These hinzu.</span></button></div>';
+        return;
+      }
+      theses.forEach(thesis => {
+        const item = document.createElement('div');
+        item.className = 'list-item' + (selectedId === thesis.id ? ' active' : '');
+        item.innerHTML = `<button type="button" class="list-btn" draggable="true"><strong>${scoreText(thesis.score)} · ${locationOf(thesis.id) || 'Pool/Liste'}</strong><span>${thesis.text}</span></button><button type="button" class="remove-thesis-btn">These entfernen</button>`;
+        const btn = item.querySelector('.list-btn');
+        btn.addEventListener('click', () => { selectedId = thesis.id; renderAll(); });
+        btn.addEventListener('dragstart', (event) => { event.dataTransfer.setData('text/plain', thesis.id); });
+        item.querySelector('.remove-thesis-btn').addEventListener('click', () => removeThesis(thesis.id));
+        thesisList.appendChild(item);
+      });
+    }
+
+    function renderEditor(){
+      ratingGrid.innerHTML = '';
+      const current = getThesis(selectedId);
+      if(!current){
+        selectedText.value = '';
+        selectedText.disabled = true;
+        saveBtn.disabled = true;
+        deleteBtn.disabled = true;
+        editorInfo.textContent = 'Wähle eine These aus, dann kannst du Text und Wertung ändern.';
+        scoreOptions.forEach(opt => { const b=document.createElement('button'); b.className='rating-btn'; b.textContent=opt.label; b.disabled=true; ratingGrid.appendChild(b); });
+        return;
+      }
+      selectedText.disabled = false;
+      saveBtn.disabled = false;
+      deleteBtn.disabled = false;
+      selectedText.value = current.text;
+      editorInfo.textContent = 'Die ausgewählte These kann aus dem Mittelpool direkt auf die gespiegelten Teamfelder gezogen werden.';
+      scoreOptions.forEach(opt => {
+        const b = document.createElement('button');
+        b.className = 'rating-btn' + (current.score === opt.value ? ' active' : '');
+        b.textContent = opt.label;
+        b.addEventListener('click', () => { current.score = opt.value; renderAll(); });
+        ratingGrid.appendChild(b);
+      });
+    }
+
+    function updateMeta(){
+      const placed = new Set(Object.values(placements)).size;
+      const positive = theses.filter(t => t.score === 1 || t.score === 3).length;
+      const negative = theses.filter(t => t.score === -1 || t.score === -3).length;
+      document.getElementById('countAll').textContent = String(theses.length);
+      document.getElementById('countPlaced').textContent = String(placed);
+      document.getElementById('countPositive').textContent = String(positive);
+      document.getElementById('countNegative').textContent = String(negative);
+    }
+
+    function updateBars(){
+      const a = Number(scoreAlman.value || 0);
+      const b = Number(scoreAus.value || 0);
+      const max = Math.max(a, b, 1);
+      document.getElementById('barAlman').style.width = `${(a / max) * 100}%`;
+      document.getElementById('barAus').style.width = `${(b / max) * 100}%`;
+      document.getElementById('labelAlman').textContent = a;
+      document.getElementById('labelAus').textContent = b;
+    }
+
+    function renderStatTable(targetId, rows){
+      const target = document.getElementById(targetId);
+      target.innerHTML = '';
+      rows.forEach((row, index) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${row.player}</td>
+          <td><input class="stat-input" value="${row.punkte}" data-index="${index}" data-key="punkte" data-group="${targetId}" /></td>
+        `;
+        target.appendChild(tr);
+      });
+      target.querySelectorAll('input').forEach(input => {
+        input.addEventListener('input', (event) => {
+          const group = event.target.dataset.group === 'tableAlman' ? almanStats : ausStats;
+          group[Number(event.target.dataset.index)][event.target.dataset.key] = event.target.value;
+        });
+      });
+    }
+
+    function renderRemainingTheses(){
+      const boardIds = new Set(Object.values(placements));
+      const free = theses.filter(thesis => !boardIds.has(thesis.id)).slice(0,2);
+      remainingTheses.innerHTML = '';
+      if(!free.length){
+        remainingTheses.innerHTML = '<div class="rest-card"><div class="rest-top"><strong>Keine offenen Restthesen</strong><span class="rest-badge">Board voll</span></div><span style="color:var(--muted)">Alle Thesen liegen aktuell auf dem Board.</span></div>';
+        return;
+      }
+      free.forEach((thesis, index) => {
+        const item = document.createElement('div');
+        item.className = 'rest-card' + (selectedId === thesis.id ? ' active' : '');
+        item.innerHTML = `<div class="rest-top"><strong>Restthese ${index + 1}</strong><span class="rest-badge">${scoreText(thesis.score)}</span></div><button type="button" class="list-btn" draggable="true"><span style="font-size:var(--text-sm);color:var(--text);display:block;text-align:left">${thesis.text}</span></button><button type="button" class="remove-thesis-btn">These entfernen</button>`;
+        const btn = item.querySelector('.list-btn');
+        btn.addEventListener('click', () => { selectedId = thesis.id; renderAll(); });
+        btn.addEventListener('dragstart', (event) => { event.dataTransfer.setData('text/plain', thesis.id); });
+        item.querySelector('.remove-thesis-btn').addEventListener('click', () => removeThesis(thesis.id));
+        remainingTheses.appendChild(item);
+      });
+    }
+
+    function removeThesis(id){
+      const thesisIndex = theses.findIndex(t => t.id === id);
+      if(thesisIndex === -1) return;
+      theses.splice(thesisIndex, 1);
+      Object.keys(placements).forEach(key => { if(placements[key] === id) delete placements[key]; });
+      if(selectedId === id) selectedId = null;
+      renderAll();
+    }
+
+    function renderWheelLegend(){
+      wheelLegend.innerHTML = '';
+      wheelSegments.forEach((segment) => {
+        const chip = document.createElement('div');
+        chip.className = 'wheel-chip';
+        chip.textContent = segment;
+        wheelLegend.appendChild(chip);
+      });
+    }
+
+    function addThesis(text){
+      const id = 'thesis-' + Date.now() + '-' + Math.random().toString(36).slice(2,6);
+      theses.unshift({ id, text: text.trim(), score: 0 });
+      const emptyPool = Array.from({length:12}, (_, i) => `pool-${i}`).find(key => !placements[key]);
+      if (emptyPool) placements[emptyPool] = id;
+      selectedId = id;
+      renderAll();
+    }
+
+    function renderAll(){
+      renderBoard();
+      renderPlayers();
+      renderList();
+      renderEditor();
+      renderStatTable('tableAlman', almanStats);
+      renderStatTable('tableAus', ausStats);
+      renderRemainingTheses();
+      updateMeta();
+      updateBars();
+      renderWheelLegend();
+      autosave();
+    }
+
+    addBtn.addEventListener('click', () => {
+      const text = newThesis.value.trim();
+      if(!text) return;
+      addThesis(text);
+      newThesis.value = '';
+      newThesis.focus();
+    });
+
+    saveBtn.addEventListener('click', () => {
+      const current = getThesis(selectedId);
+      if(!current) return;
+      current.text = selectedText.value.trim();
+      renderAll();
+    });
+
+    deleteBtn.addEventListener('click', () => {
+      if(!selectedId) return;
+      removeThesis(selectedId);
+    });
+
+    document.getElementById('clearBtn').addEventListener('click', () => {
+      theses.splice(0, theses.length);
+      Object.keys(placements).forEach(key => delete placements[key]);
+      selectedId = null;
+      figureImages.fill(null);
+      scoreAlman.value = 0;
+      scoreAus.value = 0;
+      renderAll();
+    });
+
+    playerSearch.addEventListener('input', renderPlayers);
+    playerUpload.addEventListener('change', async (event) => {
+      const files = Array.from(event.target.files || []);
+      for (const file of files) {
+        const url = await new Promise(resolve => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.readAsDataURL(file);
+        });
+        players.unshift({ id: 'upload-' + Date.now() + Math.random().toString(36).slice(2,5), name: file.name.replace(/\.[^.]+$/, ''), club: 'Upload', image: url });
+      }
+      playerUpload.value = '';
+      renderPlayers();
+    });
+
+    coinBtn.addEventListener('click', () => {
+      const result = Math.random() < 0.5 ? 'Kopf' : 'Zahl';
+      coinInner.classList.remove('flip');
+      void coinInner.offsetWidth;
+      coinInner.classList.add('flip');
+      setTimeout(() => { coinResult.textContent = result; }, 430);
+    });
+    scoreAlman.addEventListener('input', updateBars);
+    scoreAus.addEventListener('input', updateBars);
+    spinBtn.addEventListener('click', () => {
+      const segmentIndex = Math.floor(Math.random() * wheelSegments.length);
+      spinBtn.disabled = true;
+      wheelResult.textContent = 'Dreht...';
+      setTimeout(() => {
+        const result = wheelSegments[segmentIndex];
+        questionFieldResult = result;
+        wheelResult.textContent = result;
+        spinBtn.disabled = false;
+        renderBoard();
+      }, 900);
+    });
+
+    saveStateBtn.addEventListener('click', () => {
+      const blob = new Blob([JSON.stringify(buildState(), null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'rasenschach-stand.json';
+      link.click();
+      URL.revokeObjectURL(url);
+    });
+
+    loadStateInput.addEventListener('change', (event) => {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          applyState(JSON.parse(reader.result));
+          renderAll();
+        } catch (error) {
+          alert('Die Datei konnte nicht geladen werden.');
+        }
+      };
+      reader.readAsText(file);
+      loadStateInput.value = '';
+    });
+
+    document.getElementById('fillDemoBtn').addEventListener('click', () => {
+      theses.splice(0, theses.length,
+        { id: 'd1', text: 'Heidenheim bleibt ohne Gegentor im Spiel gegen Pauli', score: -3 },
+        { id: 'd2', text: 'Drei Spiele werden nach Rückstand noch gedreht', score: -1 },
+        { id: 'd3', text: 'Im Derby fallen über 3,5 Tore', score: 0 },
+        { id: 'd4', text: 'Mindestens zwei Spiele enden mit Primzahl-Treffern', score: 3 },
+        { id: 'd5', text: 'Jens Playlist bringt mindestens einen Scorerpunkt', score: -1 },
+        { id: 'd6', text: 'Dortmund kassiert mindestens ein Gelb wegen Zeitspiel', score: 1 },
+        { id: 'd7', text: 'Ein Joker trifft in der Nachspielzeit', score: 3 },
+        { id: 'd8', text: 'Ein Keeper sammelt einen Assist', score: -3 }
+      );
+      Object.keys(placements).forEach(key => delete placements[key]);
+      figureImages.fill(null);
+      placements['pool-0']='d1'; placements['pool-1']='d2'; placements['pool-2']='d3'; placements['pool-3']='d4';
+      placements['pool-6']='d5'; placements['pool-7']='d6'; placements['top-field-3']='d7'; placements['bottom-field-0']='d8';
+      scoreAlman.value = 7;
+      scoreAus.value = 5;
+      selectedId = 'd1';
+      renderAll();
+    });
+
+    tryAutoload();
+    renderAll();
+  </script>
+</body>
+</html>
