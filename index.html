@@ -52,8 +52,9 @@
     .label{display:block;font-size:var(--text-sm);font-weight:800;color:var(--muted);margin:.9rem 0 .45rem}
     .textarea,.search-input,.stat-input{width:100%;background:#0d0d0d;border:1px solid var(--border);border-radius:var(--radius-md);padding:.9rem .95rem;color:var(--text)}.textarea{min-height:120px;resize:vertical}.stat-input{padding:.55rem .65rem;border-radius:.65rem}
     .library-head{display:flex;justify-content:space-between;gap:.75rem;align-items:center;flex-wrap:wrap;margin-top:1rem}.upload-btn{position:relative;overflow:hidden}.upload-btn input{position:absolute;inset:0;opacity:0;cursor:pointer}
-    .player-grid{display:grid;grid-template-columns:1fr;gap:.5rem;max-height:26rem;overflow:auto;margin-top:1rem}.player-card{background:var(--surface-2);border:1px solid #2a2a2a;border-radius:var(--radius-lg);padding:.65rem;display:grid;gap:.3rem}
-    .player-empty{border-radius:.75rem;display:grid;place-items:center;color:var(--faint);background:#0d0d0d;border:1px dashed #333;font-size:var(--text-xs);text-align:center;padding:.85rem}
+    .player-grid{display:grid;grid-template-columns:1fr;gap:.5rem;max-height:26rem;overflow:auto;margin-top:1rem}.player-card{background:var(--surface-2);border:1px solid #2a2a2a;border-radius:var(--radius-lg);padding:.65rem;display:grid;grid-template-columns:auto 1fr;gap:.6rem;align-items:center}
+    .player-empty{border-radius:.75rem;display:grid;place-items:center;color:var(--faint);background:#0d0d0d;border:1px dashed #333;font-size:var(--text-xs);text-align:center;padding:.85rem;grid-column:1/-1}
+    .player-thumb{width:44px;height:44px;border-radius:50%;overflow:hidden;background:#0d0d0d;display:grid;place-items:center;flex-shrink:0}.player-thumb img{width:100%;height:100%;object-fit:cover}.player-thumb span{font-size:.65rem;color:var(--faint)}
     .player-card strong{font-size:var(--text-sm)}.player-card span{font-size:var(--text-xs);color:var(--muted)}.player-drag{width:100%;text-align:left;cursor:grab;display:grid;gap:.18rem}.player-drag:active{cursor:grabbing}
     .thesis-list{display:grid;gap:.65rem;max-height:20rem;overflow:auto;margin-top:1rem;padding-right:.15rem}.list-item{padding:.85rem;border-radius:var(--radius-lg);background:var(--surface-2);border:1px solid #2a2a2a}
     .list-item.active{outline:2px solid rgba(255,255,255,.45);outline-offset:2px}.list-btn{width:100%;text-align:left;cursor:grab}.list-btn:active{cursor:grabbing}.list-item strong{display:block;font-size:var(--text-sm);margin-bottom:.2rem}.list-item span{font-size:var(--text-sm);color:var(--muted);display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
@@ -70,8 +71,8 @@
     .wheel-wrap{position:relative;width:220px;height:220px;justify-self:center}
     .wheel-pointer{position:absolute;top:-6px;left:50%;translate:-50% 0;width:0;height:0;border-left:14px solid transparent;border-right:14px solid transparent;border-top:22px solid #f0f0f0;z-index:3;filter:drop-shadow(0 2px 4px rgba(0,0,0,.5))}
     .wheel{width:100%;height:100%;border-radius:50%;border:6px solid #1c1c1c;box-shadow:var(--shadow-lg),inset 0 0 0 2px rgba(255,255,255,.08);position:relative;transition:transform 2.4s cubic-bezier(.16,.86,.23,1)}
-    .wheel-hub{position:absolute;inset:0;display:grid;place-items:center}.wheel-hub span{width:2.6rem;height:2.6rem;border-radius:50%;background:#f0f0f0;box-shadow:var(--shadow-sm);z-index:2}
-    .wheel-labels{position:absolute;inset:0}.wheel-label{position:absolute;top:12%;left:50%;font-size:.72rem;font-weight:800;color:#0d0d0d;text-shadow:0 1px 0 rgba(255,255,255,.35)}
+    .wheel-hub{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none}.wheel-hub span{width:2.6rem;height:2.6rem;border-radius:50%;background:#f0f0f0;box-shadow:var(--shadow-sm);z-index:2}
+    .wheel-labels{position:absolute;inset:0;pointer-events:none}.wheel-label{position:absolute;font-size:.72rem;font-weight:800;color:#0d0d0d;text-shadow:0 1px 0 rgba(255,255,255,.35);white-space:nowrap}
     .wheel-side{display:grid;gap:.75rem}.wheel-result-card{padding:.85rem;border-radius:var(--radius-lg);background:var(--surface-2);border:1px solid #2a2a2a;text-align:center}
     .wheel-chips{display:flex;flex-wrap:wrap;gap:.4rem}.wheel-chip{padding:.35rem .65rem;border-radius:var(--radius-full);background:var(--surface-2);border:1px solid #2a2a2a;font-size:var(--text-xs);color:var(--muted)}
     .rest-grid{display:grid;gap:.65rem;margin-top:.85rem}.rest-card{padding:.85rem;border-radius:var(--radius-lg);background:var(--surface-2);border:1px solid #2a2a2a}
@@ -223,6 +224,12 @@
             <label class="ghost-btn upload-btn">Bilder hochladen<input id="playerUpload" type="file" accept="image/*" multiple /></label>
           </div>
           <div class="player-grid" id="playerGrid"></div>
+          <label class="label" for="bulkPlayers">Mehrere Spieler auf einmal (eine Zeile pro Spieler: Name;Verein;Bild-URL)</label>
+          <textarea id="bulkPlayers" class="textarea" style="min-height:100px" placeholder="Harry Kane;Bayern;https://beispiel.de/kane.jpg&#10;Jamal Musiala;Bayern;https://beispiel.de/musiala.jpg"></textarea>
+          <p style="margin-top:.35rem">Tipp: Bild-URL kann leer bleiben (dann erscheint nur der Anfangsbuchstabe). Für echte Fotos eignen sich frei nutzbare Bilder, z.B. von Wikimedia Commons, oder Bild-Links, die du selbst hostest.</p>
+          <div class="editor-actions">
+            <button class="ghost-btn" type="button" id="bulkImportBtn">Liste importieren</button>
+          </div>
         </section>
 
         <section class="side-card">
@@ -277,10 +284,10 @@
     const figureLabels = ['Turm','Springer','Läufer','Dame','König','Turm','Springer','Läufer','Dame','König'];
     const figureImages = Array(10).fill(null);
     const players = [
-      { id:'p1', name:'Harry Kane', club:'Bayern', image:'https://images.unsplash.com/photo-1517466787929-bc90951d0974?auto=format&fit=crop&w=800&q=80' },
-      { id:'p2', name:'Chris Führich', club:'Stuttgart', image:'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80' },
-      { id:'p3', name:'Granit Xhaka', club:'Leverkusen', image:'https://images.unsplash.com/photo-1542038784456-1ea8e935640e?auto=format&fit=crop&w=800&q=80' },
-      { id:'p4', name:'Nick Woltemade', club:'Stuttgart', image:'https://images.unsplash.com/photo-1496347646636-ea47f7d6b37b?auto=format&fit=crop&w=800&q=80' }
+      { id:'p1', name:'Harry Kane', club:'Bayern', image:'' },
+      { id:'p2', name:'Chris Führich', club:'Stuttgart', image:'' },
+      { id:'p3', name:'Granit Xhaka', club:'Leverkusen', image:'' },
+      { id:'p4', name:'Nick Woltemade', club:'Stuttgart', image:'' }
     ];
     const almanStats = [
       { player: 'Moritz', punkte: '' },
@@ -324,6 +331,8 @@
     const loadStateInput = document.getElementById('loadStateInput');
     const playerSearch = document.getElementById('playerSearch');
     const playerUpload = document.getElementById('playerUpload');
+    const bulkPlayers = document.getElementById('bulkPlayers');
+    const bulkImportBtn = document.getElementById('bulkImportBtn');
     const coinBtn = document.getElementById('coinBtn');
     const coinResult = document.getElementById('coinResult');
     const scoreAlman = document.getElementById('scoreAlman');
@@ -350,7 +359,8 @@
         ausStats,
         scoreAlman: scoreAlman.value,
         scoreAus: scoreAus.value,
-        questionFieldResult
+        questionFieldResult,
+        players
       };
     }
 
@@ -364,6 +374,10 @@
 
       almanStats.splice(0, almanStats.length, ...((state && state.almanStats) || almanStats));
       ausStats.splice(0, ausStats.length, ...((state && state.ausStats) || ausStats));
+
+      if (state && Array.isArray(state.players)) {
+        players.splice(0, players.length, ...state.players);
+      }
 
       scoreAlman.value = state?.scoreAlman ?? 0;
       scoreAus.value = state?.scoreAus ?? 0;
@@ -486,13 +500,15 @@
       const filtered = players.filter(player => `${player.name} ${player.club}`.toLowerCase().includes(query));
       playerGrid.innerHTML = '';
       if(!filtered.length){
-        playerGrid.innerHTML = '<div class="player-card"><div class="player-empty">Keine Spieler gefunden</div><strong>Suche anpassen</strong><span>Oder neue Bilder hochladen</span></div>';
+        playerGrid.innerHTML = '<div class="player-card"><div class="player-empty">Keine Spieler gefunden</div></div>';
         return;
       }
       filtered.forEach(player => {
         const card = document.createElement('div');
         card.className = 'player-card';
+        const initial = (player.name || '?').trim().charAt(0).toUpperCase();
         card.innerHTML = `
+          <div class="player-thumb">${player.image ? `<img src="${player.image}" alt="${player.name}" />` : `<span>${initial}</span>`}</div>
           <button type="button" class="player-drag" draggable="true">
             <strong>${player.name}</strong>
             <span>${player.club}</span>
@@ -639,13 +655,19 @@
       wheelEl.style.background = buildWheelGradient();
       const n = wheelSegments.length;
       const step = 360 / n;
+      const center = 110;
+      const radius = 78;
       wheelLabels.innerHTML = '';
       wheelSegments.forEach((segment, i) => {
+        const angleDeg = step * i + step / 2;
+        const angleRad = (angleDeg * Math.PI) / 180;
+        const x = center + radius * Math.sin(angleRad);
+        const y = center - radius * Math.cos(angleRad);
         const label = document.createElement('div');
         label.className = 'wheel-label';
-        const angle = step * i + step / 2;
-        label.style.transform = `rotate(${angle}deg) translate(-50%,0)`;
-        label.style.transformOrigin = '50% 110px';
+        label.style.left = `${x}px`;
+        label.style.top = `${y}px`;
+        label.style.transform = 'translate(-50%,-50%)';
         label.textContent = segment;
         wheelLabels.appendChild(label);
       });
@@ -729,6 +751,22 @@
       }
       playerUpload.value = '';
       renderPlayers();
+    });
+
+    bulkImportBtn.addEventListener('click', () => {
+      const lines = bulkPlayers.value.split('\n').map(line => line.trim()).filter(Boolean);
+      if (!lines.length) return;
+      lines.forEach(line => {
+        const parts = line.split(';').map(part => part.trim());
+        const name = parts[0];
+        const club = parts[1] || '';
+        const image = parts[2] || '';
+        if (!name) return;
+        players.unshift({ id: 'bulk-' + Date.now() + '-' + Math.random().toString(36).slice(2,6), name, club, image });
+      });
+      bulkPlayers.value = '';
+      renderPlayers();
+      autosave();
     });
 
     coinBtn.addEventListener('click', () => {
