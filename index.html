@@ -68,9 +68,10 @@
     .table-wrap{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1rem}.table-box table th,.table-box table td{padding:.55rem .45rem;border-bottom:1px solid #292929;text-align:left;font-size:var(--text-sm)}.table-box table th{color:var(--muted);font-weight:700}
     .table-title{font-family:var(--font-display);font-size:1.45rem;margin-bottom:.6rem}
     .question-box{margin-bottom:1rem}
-    .question-card{margin-top:.85rem;padding:1.1rem;border-radius:var(--radius-lg);background:var(--surface-2);border:1px solid #2a2a2a;min-height:70px;display:grid;align-content:center;font-family:var(--font-display);font-size:var(--text-lg);text-align:center}
-    .quiz-clubs{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center}
-    .quiz-chip{background:var(--surface-3);border:1px solid #333;padding:.45rem .85rem;border-radius:var(--radius-full);font-size:var(--text-sm);font-weight:700;font-family:var(--font-body)}
+    .question-card{margin-top:.85rem;padding:1.1rem;border-radius:var(--radius-lg);background:var(--surface-2);border:1px solid #2a2a2a;min-height:70px;height:auto;overflow:visible;display:flex;flex-direction:column;justify-content:center;align-items:center;font-family:var(--font-display);font-size:var(--text-lg);text-align:center}
+    .quiz-clubs{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center;overflow:visible;width:100%}
+    .quiz-chip{background:var(--surface-3);border:1px solid #333;padding:.45rem .85rem;border-radius:var(--radius-full);font-size:var(--text-sm);font-weight:700;font-family:var(--font-body);white-space:nowrap;flex:0 0 auto}
+    .quiz-arrow{color:var(--faint);font-size:var(--text-sm);align-self:center;flex:0 0 auto}
     .answer-card{margin-top:.6rem;padding:.85rem;border-radius:var(--radius-lg);background:var(--surface-2);border:1px solid #2a2a2a;text-align:center;color:var(--muted);font-weight:700}
     .answer-card.revealed{color:var(--green);background:rgba(57,199,114,.12);border-color:rgba(57,199,114,.4)}
     .wheel-box{margin-top:1rem;display:grid;gap:1rem;grid-template-columns:auto 1fr;align-items:center}
@@ -86,7 +87,7 @@
     .rest-badge{padding:.25rem .55rem;border-radius:var(--radius-full);background:var(--surface-3);font-size:var(--text-xs);color:var(--muted)}
     @media (max-width: 1260px){.layout,.bottom-tools,.table-wrap{grid-template-columns:1fr}.headline{display:grid}}
     @media (max-width: 900px){.topbar{display:grid}.actions{flex-wrap:wrap}.field-main{font-size:2.15rem}.pool-cell{min-height:126px}.figure-cell{min-height:166px}.meta-grid,.rating-grid,.chart-inputs{grid-template-columns:1fr}.wheel-box{grid-template-columns:1fr}}
-    @media (max-width: 700px){.app{width:min(calc(100% - .4rem),100%);padding:.35rem}.pool-row{grid-template-columns:repeat(3,1fr)}.pool-cell{min-height:112px}.player-grid{grid-template-columns:1fr}.bar-line{grid-template-columns:1fr}}
+    @media (max-width: 700px){.app{width:min(calc(100% - .4rem),100%);padding:.35rem}.pool-row{grid-template-columns:repeat(3,1fr)}.pool-cell{min-height:112px}.player-grid{grid-template-columns:1fr}.bar-line{grid-template-columns:1fr}.quiz-chip{font-size:.72rem;padding:.38rem .65rem}}
   </style>
 </head>
 <body>
@@ -336,15 +337,17 @@
       { type: 'trivia', q: 'Wer gewann den DFB-Pokal 2023?', a: 'RB Leipzig' },
       { type: 'trivia', q: 'Wer ist Rekordmeister der Bundesliga?', a: 'FC Bayern München' },
       { type: 'trivia', q: 'Wer gewann die WM 2018?', a: 'Frankreich' },
-      { type: 'transfer', clubs: ['Lech Posen','Borussia Dortmund','Bayern München','FC Barcelona'], a: 'Robert Lewandowski' },
-      { type: 'transfer', clubs: ['Borussia Dortmund','Bayern München','Borussia Dortmund','Eintracht Frankfurt'], a: 'Mario Götze' },
+      { type: 'transfer', clubs: ['Znicz Pruszków','Lech Posen','Borussia Dortmund','Bayern München','FC Barcelona'], a: 'Robert Lewandowski' },
+      { type: 'transfer', clubs: ['Borussia Dortmund','Bayern München','Borussia Dortmund','PSV Eindhoven','Eintracht Frankfurt'], a: 'Mario Götze' },
       { type: 'transfer', clubs: ['Bayern München','Bayer Leverkusen (Leihe)','Bayern München','Real Madrid'], a: 'Toni Kroos' },
       { type: 'transfer', clubs: ['Schalke 04','Werder Bremen','Real Madrid','Arsenal','Fenerbahçe'], a: 'Mesut Özil' },
       { type: 'transfer', clubs: ['Schalke 04','Bayern München'], a: 'Manuel Neuer' },
-      { type: 'transfer', clubs: ['Hertha BSC','Manchester City','Bayern München'], a: 'Jérôme Boateng' },
-      { type: 'transfer', clubs: ['1. FC Nürnberg','Borussia Dortmund','Manchester City','FC Barcelona'], a: 'Ilkay Gündogan' },
-      { type: 'transfer', clubs: ['Borussia Mönchengladbach','Borussia Dortmund'], a: 'Marco Reus' },
-      { type: 'transfer', clubs: ['Schalke 04','Manchester City','Bayern München'], a: 'Leroy Sané' }
+      { type: 'transfer', clubs: ['Hertha BSC','Manchester City','Bayern München','Olympique Lyon'], a: 'Jérôme Boateng' },
+      { type: 'transfer', clubs: ['1. FC Nürnberg','Borussia Dortmund','Manchester City','FC Barcelona','Manchester City'], a: 'Ilkay Gündogan' },
+      { type: 'transfer', clubs: ['Rot Weiss Ahlen','Borussia Mönchengladbach','Borussia Dortmund'], a: 'Marco Reus' },
+      { type: 'transfer', clubs: ['Schalke 04','Manchester City','Bayern München'], a: 'Leroy Sané' },
+      { type: 'transfer', clubs: ['1. FC Köln','Borussia Mönchengladbach','FC Chelsea','FSV Mainz 05'], a: 'Kai Havertz' },
+      { type: 'transfer', clubs: ['Karlsruher SC','Borussia Dortmund','FC Bayern München'], a: 'Timo Werner' }
     ];
     let currentQuizIndex = -1;
     let lastQuizIndex = -1;
@@ -755,16 +758,24 @@
     function renderQuizQuestion(){
       const item = quizItems[currentQuizIndex];
       if(!item){
+        footballQuestion.innerHTML = '';
         footballQuestion.textContent = 'Klick auf "Generieren" für eine Frage.';
         return;
       }
       if(item.type === 'trivia'){
+        footballQuestion.innerHTML = '';
         footballQuestion.textContent = item.q;
       } else {
         footballQuestion.innerHTML = '';
         const wrap = document.createElement('div');
         wrap.className = 'quiz-clubs';
-        item.clubs.forEach(club => {
+        item.clubs.forEach((club, i) => {
+          if (i > 0) {
+            const arrow = document.createElement('span');
+            arrow.className = 'quiz-arrow';
+            arrow.textContent = '→';
+            wrap.appendChild(arrow);
+          }
           const chip = document.createElement('span');
           chip.className = 'quiz-chip';
           chip.textContent = club;
