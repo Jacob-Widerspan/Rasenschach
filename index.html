@@ -60,13 +60,15 @@
     .list-item.active{outline:2px solid rgba(255,255,255,.45);outline-offset:2px}.list-btn{width:100%;text-align:left;cursor:grab}.list-btn:active{cursor:grabbing}.list-item strong{display:block;font-size:var(--text-sm);margin-bottom:.2rem}.list-item span{font-size:var(--text-sm);color:var(--muted);display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
     .editor-actions{display:flex;gap:.75rem;margin-top:1rem;flex-wrap:wrap}.rating-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:.5rem;margin-top:1rem}.rating-btn{min-height:52px;border-radius:var(--radius-md);font-weight:800;background:var(--surface-2);border:1px solid #303030}.rating-btn.active{background:#f0f0f0;color:#0d0d0d;border-color:transparent}
     .meta-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.6rem;margin-top:1rem}.meta-card{padding:.8rem;border-radius:var(--radius-lg);background:var(--surface-2);border:1px solid #2a2a2a}.meta-card strong{display:block;font-size:var(--text-xl);font-family:var(--font-display)}.meta-card span{font-size:var(--text-sm);color:var(--muted)}
-    .bottom-tools{display:grid;grid-template-columns:1fr 1.2fr;gap:1rem;margin-top:1rem}.coin-box,.chart-box,.table-box,.wheel-box{background:rgba(17,17,17,.94);border:1px solid var(--border);box-shadow:var(--shadow-md);border-radius:var(--radius-xl);padding:1rem}
+    .bottom-tools{display:grid;grid-template-columns:1fr 1.2fr;gap:1rem;margin-top:1rem}.coin-box,.chart-box,.table-box,.wheel-box,.question-box{background:rgba(17,17,17,.94);border:1px solid var(--border);box-shadow:var(--shadow-md);border-radius:var(--radius-xl);padding:1rem}
     .coin-result{margin-top:1rem;display:grid;place-items:center;min-height:92px;border-radius:var(--radius-lg);background:var(--surface-2);font-family:var(--font-display);font-size:2rem}
     .coin-inner{display:grid;place-items:center;transform:rotateY(0deg)}.coin-inner.flip{animation:coinFlip .43s ease}
     @keyframes coinFlip{0%{transform:rotateY(0deg) scale(1)}50%{transform:rotateY(180deg) scale(1.08)}100%{transform:rotateY(360deg) scale(1)}}
     .chart-box{display:grid;gap:1rem}.chart-inputs{display:grid;grid-template-columns:repeat(2,1fr);gap:.75rem}.chart-row{display:grid;gap:.45rem}.bar-stage{display:grid;gap:.8rem}.bar-line{display:grid;grid-template-columns:110px 1fr 60px;gap:.7rem;align-items:center}.bar-track{height:18px;border-radius:999px;background:#0d0d0d;border:1px solid #272727;overflow:hidden}.bar-fill{height:100%;border-radius:999px}.bar-fill.alman{background:linear-gradient(90deg,var(--green),#8cf0b5)}.bar-fill.aus{background:linear-gradient(90deg,var(--blue),#9ee6ff)}
     .table-wrap{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1rem}.table-box table th,.table-box table td{padding:.55rem .45rem;border-bottom:1px solid #292929;text-align:left;font-size:var(--text-sm)}.table-box table th{color:var(--muted);font-weight:700}
     .table-title{font-family:var(--font-display);font-size:1.45rem;margin-bottom:.6rem}
+    .question-box{margin-bottom:1rem}
+    .question-card{margin-top:.85rem;padding:1.1rem;border-radius:var(--radius-lg);background:var(--surface-2);border:1px solid #2a2a2a;min-height:70px;display:grid;align-content:center;font-family:var(--font-display);font-size:var(--text-lg);text-align:center}
     .wheel-box{margin-top:1rem;display:grid;gap:1rem;grid-template-columns:auto 1fr;align-items:center}
     .wheel-wrap{position:relative;width:220px;height:220px;justify-self:center}
     .wheel-pointer{position:absolute;top:-6px;left:50%;translate:-50% 0;width:0;height:0;border-left:14px solid transparent;border-right:14px solid transparent;border-top:22px solid #f0f0f0;z-index:3;filter:drop-shadow(0 2px 4px rgba(0,0,0,.5))}
@@ -109,6 +111,15 @@
 
     <div class="layout">
       <section>
+        <section class="question-box">
+          <h3>Fußballfrage-Generator</h3>
+          <p>Klick auf "Generieren" für eine neue Zufallsfrage zum Aufwärmen vor dem Spiel.</p>
+          <div class="editor-actions">
+            <button class="primary-btn" type="button" id="questionGenBtn">Generieren</button>
+          </div>
+          <div class="question-card" id="footballQuestion">Klick auf "Generieren" für eine Frage.</div>
+        </section>
+
         <section class="board-shell">
           <div class="headline">
             <div>
@@ -308,6 +319,34 @@
     ];
     const wheelSegments = ['+1', '-1', '+2', '-2', 'Joker', '+/-3', '-/+3', '+3'];
     const wheelColors = ['#39c772','#e05a5a','#4cb9e8','#e8946a','#e8c34c','#8c71ff','#5ad1c9','#d97fd6'];
+    const footballQuestions = [
+      'Welcher Bundesliga-Spieler ist aktuell in der besten Form?',
+      'Elfmeter oder Fallrückzieher - welches Tor ist spektakulärer?',
+      'Welches Team steigt diese Saison ab?',
+      'Wer wird Torschützenkönig der Saison?',
+      'Welcher Trainer wird als erster entlassen?',
+      'Bayern-Dominanz: gut fürs Produkt oder schlecht für die Spannung?',
+      'Welcher Aufsteiger überrascht diese Saison am meisten?',
+      'Sollte der VAR abgeschafft werden?',
+      'Welches Derby ist emotional das intensivste?',
+      'Wer ist der unterschätzteste Spieler der Liga?',
+      'Welcher Verein holt den DFB-Pokal?',
+      'Ist die Fünf-Jokerregel gut fürs Spiel?',
+      'Welcher junge Spieler wird zum nächsten Nationalspieler?',
+      'Welches Stadion hat die beste Atmosphäre?',
+      'Wird ein deutsches Team international überraschen?',
+      'Welcher Transfer war bisher der beste dieser Saison?',
+      'Sollte die Bundesliga auf 20 Teams aufgestockt werden?',
+      'Welcher Torhüter hält die Saison über die meisten Elfmeter?',
+      'Welches Team hat die stärkste Defensive?',
+      'Gibt es diese Saison eine Negativserie, die zum Trainerwechsel führt?',
+      'Welcher Rückrundenstart entscheidet die Meisterschaft?',
+      'Sind Standardsituationen unterbewertet für den Saisonerfolg?',
+      'Welches Team schafft die größte Überraschung im Europapokal?',
+      'Wer gewinnt das Fernduell an der Tabellenspitze?',
+      'Welcher Kapitän führt sein Team am besten?'
+    ];
+    let lastQuestionIndex = -1;
     let wheelRotation = 0;
     let questionFieldResult = '?';
     const autosaveKey = 'rasenschach-autosave-v1';
@@ -344,6 +383,8 @@
     const wheelLegend = document.getElementById('wheelLegend');
     const wheelEl = document.getElementById('wheel');
     const wheelLabels = document.getElementById('wheelLabels');
+    const questionGenBtn = document.getElementById('questionGenBtn');
+    const footballQuestion = document.getElementById('footballQuestion');
 
     function getThesis(id){ return theses.find(t => t.id === id); }
     function locationOf(id){ return Object.entries(placements).find(([, value]) => value === id)?.[0] || null; }
@@ -796,6 +837,15 @@
         spinBtn.disabled = false;
         renderBoard();
       }, 2500);
+    });
+
+    questionGenBtn.addEventListener('click', () => {
+      let idx;
+      do {
+        idx = Math.floor(Math.random() * footballQuestions.length);
+      } while (idx === lastQuestionIndex && footballQuestions.length > 1);
+      lastQuestionIndex = idx;
+      footballQuestion.textContent = footballQuestions[idx];
     });
 
     saveStateBtn.addEventListener('click', () => {
