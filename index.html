@@ -68,10 +68,9 @@
     .table-wrap{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1rem}.table-box table th,.table-box table td{padding:.55rem .45rem;border-bottom:1px solid #292929;text-align:left;font-size:var(--text-sm)}.table-box table th{color:var(--muted);font-weight:700}
     .table-title{font-family:var(--font-display);font-size:1.45rem;margin-bottom:.6rem}
     .question-box{margin-bottom:1rem}
-    .question-card{margin-top:.85rem;padding:1.1rem;border-radius:var(--radius-lg);background:var(--surface-2);border:1px solid #2a2a2a;min-height:70px;height:auto;overflow:visible;display:flex;flex-direction:column;justify-content:center;align-items:center;font-family:var(--font-display);font-size:var(--text-lg);text-align:center}
-    .quiz-clubs{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center;overflow:visible;width:100%}
-    .quiz-chip{background:var(--surface-3);border:1px solid #333;padding:.45rem .85rem;border-radius:var(--radius-full);font-size:var(--text-sm);font-weight:700;font-family:var(--font-body);white-space:nowrap;flex:0 0 auto}
-    .quiz-arrow{color:var(--faint);font-size:var(--text-sm);align-self:center;flex:0 0 auto}
+    .question-card{margin-top:.85rem;padding:1.1rem;border-radius:var(--radius-lg);background:var(--surface-2);border:1px solid #2a2a2a;min-height:70px;height:auto;overflow:visible;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:.35rem;text-align:center}
+    .quiz-tag{font-size:var(--text-xs);text-transform:uppercase;letter-spacing:.1em;color:var(--muted);font-weight:800}
+    .quiz-question-text{font-family:var(--font-display);font-size:var(--text-lg)}
     .answer-card{margin-top:.6rem;padding:.85rem;border-radius:var(--radius-lg);background:var(--surface-2);border:1px solid #2a2a2a;text-align:center;color:var(--muted);font-weight:700}
     .answer-card.revealed{color:var(--green);background:rgba(57,199,114,.12);border-color:rgba(57,199,114,.4)}
     .wheel-box{margin-top:1rem;display:grid;gap:1rem;grid-template-columns:auto 1fr;align-items:center}
@@ -87,7 +86,7 @@
     .rest-badge{padding:.25rem .55rem;border-radius:var(--radius-full);background:var(--surface-3);font-size:var(--text-xs);color:var(--muted)}
     @media (max-width: 1260px){.layout,.bottom-tools,.table-wrap{grid-template-columns:1fr}.headline{display:grid}}
     @media (max-width: 900px){.topbar{display:grid}.actions{flex-wrap:wrap}.field-main{font-size:2.15rem}.pool-cell{min-height:126px}.figure-cell{min-height:166px}.meta-grid,.rating-grid,.chart-inputs{grid-template-columns:1fr}.wheel-box{grid-template-columns:1fr}}
-    @media (max-width: 700px){.app{width:min(calc(100% - .4rem),100%);padding:.35rem}.pool-row{grid-template-columns:repeat(3,1fr)}.pool-cell{min-height:112px}.player-grid{grid-template-columns:1fr}.bar-line{grid-template-columns:1fr}.quiz-chip{font-size:.72rem;padding:.38rem .65rem}}
+    @media (max-width: 700px){.app{width:min(calc(100% - .4rem),100%);padding:.35rem}.pool-row{grid-template-columns:repeat(3,1fr)}.pool-cell{min-height:112px}.player-grid{grid-template-columns:1fr}.bar-line{grid-template-columns:1fr}}
   </style>
 </head>
 <body>
@@ -118,7 +117,7 @@
       <section>
         <section class="question-box">
           <h3>Fußball-Quiz</h3>
-          <p>"Generieren" für eine neue Frage - entweder eine Wissensfrage oder eine Transferhistorie aus Vereinsnamen. Mit "Aufdecken" zeigst du die Lösung.</p>
+          <p>"Generieren" für eine neue Wissens- oder Schätzfrage. Mit "Aufdecken" zeigst du die Lösung.</p>
           <div class="editor-actions">
             <button class="primary-btn" type="button" id="questionGenBtn">Generieren</button>
             <button class="ghost-btn" type="button" id="questionRevealBtn">Aufdecken</button>
@@ -327,27 +326,26 @@
     const wheelSegments = ['+1', '-1', '+2', '-2', 'Joker', '+/-3', '-/+3', '+3'];
     const wheelColors = ['#39c772','#e05a5a','#4cb9e8','#e8946a','#e8c34c','#8c71ff','#5ad1c9','#d97fd6'];
     const quizItems = [
-      { type: 'trivia', q: 'Wer gewann die WM 2014?', a: 'Deutschland' },
-      { type: 'trivia', q: 'Wer wurde Weltfußballer des Jahres 2022?', a: 'Karim Benzema' },
-      { type: 'trivia', q: 'Welcher Verein gewann die Champions League 2020?', a: 'Bayern München' },
-      { type: 'trivia', q: 'Wer ist Rekordtorschütze der Bundesliga-Geschichte?', a: 'Robert Lewandowski' },
-      { type: 'trivia', q: 'Welches Land gewann die EM 2024?', a: 'Spanien' },
-      { type: 'trivia', q: 'Wer wurde 2023 Deutscher Meister?', a: 'Bayern München' },
-      { type: 'trivia', q: 'Wer gewann den Ballon d\'Or 2023?', a: 'Lionel Messi' },
-      { type: 'trivia', q: 'Wer gewann den DFB-Pokal 2023?', a: 'RB Leipzig' },
-      { type: 'trivia', q: 'Wer ist Rekordmeister der Bundesliga?', a: 'FC Bayern München' },
-      { type: 'trivia', q: 'Wer gewann die WM 2018?', a: 'Frankreich' },
-      { type: 'transfer', clubs: ['Znicz Pruszków','Lech Posen','Borussia Dortmund','Bayern München','FC Barcelona'], a: 'Robert Lewandowski' },
-      { type: 'transfer', clubs: ['Borussia Dortmund','Bayern München','Borussia Dortmund','PSV Eindhoven','Eintracht Frankfurt'], a: 'Mario Götze' },
-      { type: 'transfer', clubs: ['Bayern München','Bayer Leverkusen (Leihe)','Bayern München','Real Madrid'], a: 'Toni Kroos' },
-      { type: 'transfer', clubs: ['Schalke 04','Werder Bremen','Real Madrid','Arsenal','Fenerbahçe'], a: 'Mesut Özil' },
-      { type: 'transfer', clubs: ['Schalke 04','Bayern München'], a: 'Manuel Neuer' },
-      { type: 'transfer', clubs: ['Hertha BSC','Manchester City','Bayern München','Olympique Lyon'], a: 'Jérôme Boateng' },
-      { type: 'transfer', clubs: ['1. FC Nürnberg','Borussia Dortmund','Manchester City','FC Barcelona','Manchester City'], a: 'Ilkay Gündogan' },
-      { type: 'transfer', clubs: ['Rot Weiss Ahlen','Borussia Mönchengladbach','Borussia Dortmund'], a: 'Marco Reus' },
-      { type: 'transfer', clubs: ['Schalke 04','Manchester City','Bayern München'], a: 'Leroy Sané' },
-      { type: 'transfer', clubs: ['1. FC Köln','Borussia Mönchengladbach','FC Chelsea','FSV Mainz 05'], a: 'Kai Havertz' },
-      { type: 'transfer', clubs: ['Karlsruher SC','Borussia Dortmund','FC Bayern München'], a: 'Timo Werner' }
+      { type: 'trivia', q: 'In welchem Jahr wurde die Bundesliga gegründet?', a: '1963' },
+      { type: 'trivia', q: 'Welcher Verein gewann die allererste Bundesliga-Meisterschaft 1963/64?', a: '1. FC Köln' },
+      { type: 'trivia', q: 'Wie viele Vereine spielten in der Bundesliga-Gründungssaison 1963/64?', a: '16' },
+      { type: 'trivia', q: 'Wer schoss das schnellste Tor der Bundesliga-Geschichte (nach 9,08 Sekunden)?', a: 'Karim Bellarabi' },
+      { type: 'trivia', q: 'Wer erzielte 5 Tore in nur 9 Minuten in einem Bundesliga-Spiel?', a: 'Robert Lewandowski' },
+      { type: 'trivia', q: 'Wer ist mit über 600 Einsätzen Rekordspieler der Bundesliga?', a: 'Karl-Heinz Körbel' },
+      { type: 'trivia', q: 'Wer wurde 2020 im Alter von 16 Jahren der jüngste Bundesliga-Spieler aller Zeiten?', a: 'Youssoufa Moukoko' },
+      { type: 'trivia', q: 'Welche zwei deutschen Vereine standen sich 2013 im Champions-League-Finale gegenüber?', a: 'Bayern München und Borussia Dortmund' },
+      { type: 'trivia', q: 'Wer ist mit 365 Toren Bundesliga-Rekordtorschütze?', a: 'Gerd Müller' },
+      { type: 'trivia', q: 'Welcher Trainer führte den 1. FC Kaiserslautern 1998 direkt nach dem Aufstieg zur Meisterschaft?', a: 'Otto Rehhagel' },
+      { type: 'trivia', q: 'In welcher Stadt steht das Stadion mit dem Spitznamen "Hexenkessel"?', a: 'Leverkusen (BayArena)' },
+      { type: 'trivia', q: 'Welcher Verein trägt den Spitznamen "Die Wölfe"?', a: 'VfL Wolfsburg' },
+      { type: 'guess', q: 'Wie viele Zuschauer fasst der Signal Iduna Park in Dortmund maximal?', a: 'ca. 81.365' },
+      { type: 'guess', q: 'Wie hoch war die Ablösesumme für den bisher teuersten Transfer der Fußballgeschichte (Neymar zu PSG, 2017)?', a: 'ca. 222 Millionen Euro' },
+      { type: 'guess', q: 'Wie viele Kilometer läuft ein Fußballprofi im Schnitt pro Spiel?', a: 'ca. 10-12 km' },
+      { type: 'guess', q: 'Wie hoch ist ein Fußballtor laut offiziellen Maßen?', a: '2,44 Meter' },
+      { type: 'guess', q: 'Wie lang darf ein Fußballfeld laut FIFA-Reglement maximal sein?', a: '120 Meter' },
+      { type: 'guess', q: 'Wie viele Meisterschaften hat der FC Bayern München bis Saisonende 2022/23 gewonnen?', a: '32' },
+      { type: 'guess', q: 'Wie viele Spieltage hat eine Bundesliga-Saison mit 18 Mannschaften?', a: '34' },
+      { type: 'guess', q: 'Wie schwer ist ein offizieller Spielball laut FIFA-Vorgabe (in Gramm)?', a: '410-450 Gramm' }
     ];
     let currentQuizIndex = -1;
     let lastQuizIndex = -1;
@@ -757,32 +755,19 @@
 
     function renderQuizQuestion(){
       const item = quizItems[currentQuizIndex];
+      footballQuestion.innerHTML = '';
       if(!item){
-        footballQuestion.innerHTML = '';
         footballQuestion.textContent = 'Klick auf "Generieren" für eine Frage.';
         return;
       }
-      if(item.type === 'trivia'){
-        footballQuestion.innerHTML = '';
-        footballQuestion.textContent = item.q;
-      } else {
-        footballQuestion.innerHTML = '';
-        const wrap = document.createElement('div');
-        wrap.className = 'quiz-clubs';
-        item.clubs.forEach((club, i) => {
-          if (i > 0) {
-            const arrow = document.createElement('span');
-            arrow.className = 'quiz-arrow';
-            arrow.textContent = '→';
-            wrap.appendChild(arrow);
-          }
-          const chip = document.createElement('span');
-          chip.className = 'quiz-chip';
-          chip.textContent = club;
-          wrap.appendChild(chip);
-        });
-        footballQuestion.appendChild(wrap);
-      }
+      const tag = document.createElement('div');
+      tag.className = 'quiz-tag';
+      tag.textContent = item.type === 'guess' ? 'Schätzfrage' : 'Wissensfrage';
+      const q = document.createElement('div');
+      q.className = 'quiz-question-text';
+      q.textContent = item.q;
+      footballQuestion.appendChild(tag);
+      footballQuestion.appendChild(q);
     }
 
     addBtn.addEventListener('click', () => {
