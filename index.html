@@ -285,7 +285,6 @@
       </aside>
     </div>
   </div>
-
   <script>
     const theses = [];
     const placements = {};
@@ -298,7 +297,8 @@
       { icon: '♛', label: 'Dame' },
       { icon: '♚', label: 'König' }
     ];
-    const figureLabels = ['Turm','Springer','Läufer','Dame','König','Turm','Springer','Läufer','Dame','König'];
+    const defaultFigureLabels = ['Turm','Springer','Läufer','Dame','König','Turm','Springer','Läufer','Dame','König'];
+    const figureLabels = [...defaultFigureLabels];
     const figureImages = Array(10).fill(null);
     const players = [
       { id:'p1', name:'Harry Kane', club:'Bayern', image:'' },
@@ -413,40 +413,18 @@
       theses.splice(0, theses.length, ...((state && state.theses) || []));
       Object.keys(placements).forEach(key => delete placements[key]);
       Object.assign(placements, (state && state.placements) || {});
-
       figureLabels.splice(0, figureLabels.length, ...((state && state.figureLabels) || figureLabels));
       figureImages.splice(0, figureImages.length, ...((state && state.figureImages) || figureImages));
 
-const savedRows = [
-  ...((state && state.almanStats) || []),
-  ...((state && state.ausStats) || [])
-];
-
-const savedPoints = new Map(
-  savedRows.map(row => [row.player, row.punkte])
-);
-
-const fixedAlman = ['Moritz', 'Kevin', 'Fischer'];
-const fixedAuslaender = ['Lukas', 'Johannes', 'David'];
-
-almanStats.splice(
-  0,
-  almanStats.length,
-  ...fixedAlman.map(player => ({
-    player,
-    punkte: savedPoints.get(player) ?? ''
-  }))
-);
-
-ausStats.splice(
-  0,
-  ausStats.length,
-  ...fixedAuslaender.map(player => ({
-    player,
-    punkte: savedPoints.get(player) ?? ''
-  }))
-);
-
+      const savedRows = [
+        ...((state && state.almanStats) || []),
+        ...((state && state.ausStats) || [])
+      ];
+      const savedPoints = new Map(savedRows.map(row => [row.player, row.punkte]));
+      const fixedAlman = ['Moritz', 'Kevin', 'Fischer'];
+      const fixedAuslaender = ['Lukas', 'Johannes', 'David'];
+      almanStats.splice(0, almanStats.length, ...fixedAlman.map(player => ({ player, punkte: savedPoints.get(player) ?? '' })));
+      ausStats.splice(0, ausStats.length, ...fixedAuslaender.map(player => ({ player, punkte: savedPoints.get(player) ?? '' })));
 
       if (state && Array.isArray(state.players)) {
         players.splice(0, players.length, ...state.players);
@@ -823,8 +801,28 @@ ausStats.splice(
       Object.keys(placements).forEach(key => delete placements[key]);
       selectedId = null;
       figureImages.fill(null);
+      figureLabels.splice(0, figureLabels.length, ...defaultFigureLabels);
+      almanStats.splice(0, almanStats.length,
+        { player: 'Moritz', punkte: '' },
+        { player: 'Kevin', punkte: '' },
+        { player: 'Fischer', punkte: '' }
+      );
+      ausStats.splice(0, ausStats.length,
+        { player: 'Lukas', punkte: '' },
+        { player: 'Johannes', punkte: '' },
+        { player: 'David', punkte: '' }
+      );
       scoreAlman.value = 0;
       scoreAus.value = 0;
+      questionFieldResult = '?';
+      currentQuizIndex = -1;
+      lastQuizIndex = -1;
+      wheelResult.textContent = 'Noch nicht gedreht';
+      coinResult.textContent = '?';
+      footballAnswer.textContent = 'Antwort erscheint hier nach "Aufdecken".';
+      footballAnswer.classList.remove('revealed');
+      renderQuizQuestion();
+      try { localStorage.removeItem(autosaveKey); } catch (error) {}
       renderAll();
     });
 
