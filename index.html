@@ -417,8 +417,36 @@
       figureLabels.splice(0, figureLabels.length, ...((state && state.figureLabels) || figureLabels));
       figureImages.splice(0, figureImages.length, ...((state && state.figureImages) || figureImages));
 
-      almanStats.splice(0, almanStats.length, ...((state && state.almanStats) || almanStats));
-      ausStats.splice(0, ausStats.length, ...((state && state.ausStats) || ausStats));
+const savedRows = [
+  ...((state && state.almanStats) || []),
+  ...((state && state.ausStats) || [])
+];
+
+const savedPoints = new Map(
+  savedRows.map(row => [row.player, row.punkte])
+);
+
+const fixedAlman = ['Moritz', 'Kevin', 'Fischer'];
+const fixedAuslaender = ['Lukas', 'Johannes', 'David'];
+
+almanStats.splice(
+  0,
+  almanStats.length,
+  ...fixedAlman.map(player => ({
+    player,
+    punkte: savedPoints.get(player) ?? ''
+  }))
+);
+
+ausStats.splice(
+  0,
+  ausStats.length,
+  ...fixedAuslaender.map(player => ({
+    player,
+    punkte: savedPoints.get(player) ?? ''
+  }))
+);
+
 
       if (state && Array.isArray(state.players)) {
         players.splice(0, players.length, ...state.players);
