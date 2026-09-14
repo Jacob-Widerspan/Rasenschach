@@ -240,6 +240,12 @@
             <input id="playerSearch" class="search-input" type="search" placeholder="Spieler suchen" />
             <label class="ghost-btn upload-btn">Bilder hochladen<input id="playerUpload" type="file" accept="image/*" multiple /></label>
           </div>
+          <label class="label" for="playerUrlInput">Bild-Link einfügen</label>
+          <div class="editor-actions">
+            <input id="playerUrlInput" class="search-input" type="url" placeholder="https://beispiel.de/bild.jpg" style="flex:1" />
+            <button class="primary-btn" type="button" id="addUrlBtn">Hinzufügen</button>
+          </div>
+          <p style="margin-top:.35rem">Link einfügen, auf "Hinzufügen" klicken – die Karte erscheint danach hier und lässt sich auf ein Figurenfeld ziehen.</p>
           <div class="player-grid" id="playerGrid"></div>
           <label class="label" for="bulkPlayers">Mehrere Spieler auf einmal (eine Zeile pro Spieler: Name;Verein;Bild-URL)</label>
           <textarea id="bulkPlayers" class="textarea" style="min-height:100px" placeholder="Harry Kane;Bayern;https://beispiel.de/kane.jpg&#10;Jamal Musiala;Bayern;https://beispiel.de/musiala.jpg"></textarea>
@@ -372,6 +378,8 @@
     const loadStateInput = document.getElementById('loadStateInput');
     const playerSearch = document.getElementById('playerSearch');
     const playerUpload = document.getElementById('playerUpload');
+    const playerUrlInput = document.getElementById('playerUrlInput');
+    const addUrlBtn = document.getElementById('addUrlBtn');
     const bulkPlayers = document.getElementById('bulkPlayers');
     const bulkImportBtn = document.getElementById('bulkImportBtn');
     const coinBtn = document.getElementById('coinBtn');
@@ -854,6 +862,22 @@
       }
       playerUpload.value = '';
       renderPlayers();
+    });
+
+    addUrlBtn.addEventListener('click', () => {
+      const url = playerUrlInput.value.trim();
+      if (!url) return;
+      const count = players.filter(p => p.club === 'Link').length + 1;
+      players.unshift({ id: 'link-' + Date.now() + '-' + Math.random().toString(36).slice(2,6), name: `Bild ${count}`, club: 'Link', image: url });
+      playerUrlInput.value = '';
+      renderPlayers();
+      autosave();
+    });
+    playerUrlInput.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        addUrlBtn.click();
+      }
     });
 
     bulkImportBtn.addEventListener('click', () => {
