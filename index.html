@@ -167,12 +167,12 @@
             </div>
             <div class="chart-inputs">
               <div class="chart-row">
-                <label class="label" for="scoreAlman">Punkte Alman</label>
-                <input id="scoreAlman" class="stat-input" type="number" value="0" />
+                <label class="label" for="scoreAlman">Punkte Alman (automatisch)</label>
+                <input id="scoreAlman" class="stat-input" type="number" value="0" readonly />
               </div>
               <div class="chart-row">
-                <label class="label" for="scoreAus">Punkte Ausländer</label>
-                <input id="scoreAus" class="stat-input" type="number" value="0" />
+                <label class="label" for="scoreAus">Punkte Ausländer (automatisch)</label>
+                <input id="scoreAus" class="stat-input" type="number" value="0" readonly />
               </div>
             </div>
             <div class="bar-stage">
@@ -647,6 +647,19 @@
       document.getElementById('labelAus').textContent = b;
     }
 
+    function sumPunkte(rows){
+      return rows.reduce((sum, row) => {
+        const value = Number(String(row.punkte).replace(',', '.'));
+        return sum + (Number.isFinite(value) ? value : 0);
+      }, 0);
+    }
+
+    function recomputeTeamScores(){
+      scoreAlman.value = sumPunkte(almanStats);
+      scoreAus.value = sumPunkte(ausStats);
+      updateBars();
+    }
+
     function renderStatTable(targetId, rows){
       const target = document.getElementById(targetId);
       target.innerHTML = '';
@@ -662,6 +675,8 @@
         input.addEventListener('input', (event) => {
           const group = event.target.dataset.group === 'tableAlman' ? almanStats : ausStats;
           group[Number(event.target.dataset.index)][event.target.dataset.key] = event.target.value;
+          recomputeTeamScores();
+          autosave();
         });
       });
     }
@@ -753,7 +768,7 @@
       renderStatTable('tableAus', ausStats);
       renderRemainingTheses();
       updateMeta();
-      updateBars();
+      recomputeTeamScores();
       renderWheel();
       renderWheelLegend();
       autosave();
