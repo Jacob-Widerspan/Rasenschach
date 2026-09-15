@@ -315,12 +315,14 @@
     const almanStats = [
       { player: 'Moritz', punkte: '' },
       { player: 'Kevin', punkte: '' },
-      { player: 'Fischer', punkte: '' }
+      { player: 'Fischer', punkte: '' },
+      { player: 'Philipp', punkte: '' }
     ];
     const ausStats = [
       { player: 'Lukas', punkte: '' },
       { player: 'Johannes', punkte: '' },
-      { player: 'David', punkte: '' }
+      { player: 'David', punkte: '' },
+      { player: 'Elias', punkte: '' }
     ];
     const scoreOptions = [
       { value: -3, label: '-3' },
@@ -429,8 +431,8 @@
         ...((state && state.ausStats) || [])
       ];
       const savedPoints = new Map(savedRows.map(row => [row.player, row.punkte]));
-      const fixedAlman = ['Moritz', 'Kevin', 'Fischer'];
-      const fixedAuslaender = ['Lukas', 'Johannes', 'David'];
+      const fixedAlman = ['Moritz', 'Kevin', 'Fischer', 'Philipp'];
+      const fixedAuslaender = ['Lukas', 'Johannes', 'David', 'Elias'];
       almanStats.splice(0, almanStats.length, ...fixedAlman.map(player => ({ player, punkte: savedPoints.get(player) ?? '' })));
       ausStats.splice(0, ausStats.length, ...fixedAuslaender.map(player => ({ player, punkte: savedPoints.get(player) ?? '' })));
 
@@ -828,12 +830,14 @@
       almanStats.splice(0, almanStats.length,
         { player: 'Moritz', punkte: '' },
         { player: 'Kevin', punkte: '' },
-        { player: 'Fischer', punkte: '' }
+        { player: 'Fischer', punkte: '' },
+        { player: 'Philipp', punkte: '' }
       );
       ausStats.splice(0, ausStats.length,
         { player: 'Lukas', punkte: '' },
         { player: 'Johannes', punkte: '' },
-        { player: 'David', punkte: '' }
+        { player: 'David', punkte: '' },
+        { player: 'Elias', punkte: '' }
       );
       scoreAlman.value = 0;
       scoreAus.value = 0;
