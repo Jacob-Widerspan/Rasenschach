@@ -106,7 +106,6 @@
         </div>
       </div>
       <div class="actions">
-        <button class="ghost-btn" type="button" id="fillDemoBtn">Demo füllen</button>
         <button class="ghost-btn" type="button" id="saveStateBtn">Stand speichern</button>
         <label class="ghost-btn upload-btn">Stand laden<input id="loadStateInput" type="file" accept="application/json,.json" /></label>
         <button class="ghost-btn" type="button" id="clearBtn">Alles leeren</button>
@@ -204,12 +203,6 @@
           </div>
         </section>
 
-        <section class="coin-box" style="margin-top:1rem">
-          <h3>Restthesen</h3>
-          <p>Offene Thesen, die noch keinem Feld zugewiesen sind.</p>
-          <div id="remainingTheses" class="rest-grid"></div>
-        </section>
-
         <section class="table-wrap">
           <div class="table-box">
             <div class="table-title">Spielerstatistik Alman</div>
@@ -272,18 +265,6 @@
         </section>
 
         <section class="side-card">
-          <h3>Bearbeiten</h3>
-          <p id="editorInfo">Wähle eine These aus, um Text und Wertung zu ändern.</p>
-          <label class="label" for="selectedText">Text bearbeiten</label>
-          <textarea id="selectedText" class="textarea" placeholder="Hier erscheint die ausgewählte These"></textarea>
-          <div class="rating-grid" id="ratingGrid"></div>
-          <div class="editor-actions">
-            <button class="ghost-btn" type="button" id="deleteBtn">These löschen</button>
-            <button class="primary-btn" type="button" id="saveBtn">Speichern</button>
-          </div>
-        </section>
-
-        <section class="side-card">
           <h3>Thesenliste</h3>
           <p>Jede These lässt sich aus Pool oder Liste auf die Teamfelder ziehen.</p>
           <div class="thesis-list" id="thesisList"></div>
@@ -325,13 +306,6 @@
       { player: 'David', punkte: '' },
       { player: 'Elias', punkte: '' }
     ];
-    const scoreOptions = [
-      { value: -3, label: '-3' },
-      { value: -1, label: '-1' },
-      { value: 0, label: '?' },
-      { value: 1, label: '+1' },
-      { value: 3, label: '+3' }
-    ];
     const wheelSegments = ['+1', '-1', '+2', '-2', 'Joker', '+/-3', '-/+3', '+3'];
     const wheelColors = ['#39c772','#e05a5a','#4cb9e8','#e8946a','#e8c34c','#8c71ff','#5ad1c9','#d97fd6'];
     const quizItems = [
@@ -371,11 +345,6 @@
     const newThesis = document.getElementById('newThesis');
     const addBtn = document.getElementById('addBtn');
     const thesisList = document.getElementById('thesisList');
-    const selectedText = document.getElementById('selectedText');
-    const ratingGrid = document.getElementById('ratingGrid');
-    const deleteBtn = document.getElementById('deleteBtn');
-    const saveBtn = document.getElementById('saveBtn');
-    const editorInfo = document.getElementById('editorInfo');
     const playerGrid = document.getElementById('playerGrid');
     const saveStateBtn = document.getElementById('saveStateBtn');
     const loadStateInput = document.getElementById('loadStateInput');
@@ -390,7 +359,6 @@
     const scoreAlman = document.getElementById('scoreAlman');
     const scoreAus = document.getElementById('scoreAus');
     const coinInner = document.getElementById('coinInner');
-    const remainingTheses = document.getElementById('remainingTheses');
     const wheelResult = document.getElementById('wheelResult');
     const spinBtn = document.getElementById('spinBtn');
     const wheelLegend = document.getElementById('wheelLegend');
@@ -631,32 +599,6 @@
       });
     }
 
-    function renderEditor(){
-      ratingGrid.innerHTML = '';
-      const current = getThesis(selectedId);
-      if(!current){
-        selectedText.value = '';
-        selectedText.disabled = true;
-        saveBtn.disabled = true;
-        deleteBtn.disabled = true;
-        editorInfo.textContent = 'Wähle eine These aus, um Text und Wertung zu ändern.';
-        scoreOptions.forEach(opt => { const b=document.createElement('button'); b.className='rating-btn'; b.textContent=opt.label; b.disabled=true; ratingGrid.appendChild(b); });
-        return;
-      }
-      selectedText.disabled = false;
-      saveBtn.disabled = false;
-      deleteBtn.disabled = false;
-      selectedText.value = current.text;
-      editorInfo.textContent = 'Die ausgewählte These lässt sich auf die gespiegelten Teamfelder ziehen.';
-      scoreOptions.forEach(opt => {
-        const b = document.createElement('button');
-        b.className = 'rating-btn' + (current.score === opt.value ? ' active' : '');
-        b.textContent = opt.label;
-        b.addEventListener('click', () => { current.score = opt.value; renderAll(); });
-        ratingGrid.appendChild(b);
-      });
-    }
-
     function updateMeta(){
       const placed = new Set(Object.values(placements)).size;
       const positive = theses.filter(t => t.score === 1 || t.score === 3).length;
@@ -743,26 +685,6 @@
       });
     }
 
-    function renderRemainingTheses(){
-      const boardIds = new Set(Object.values(placements));
-      const free = theses.filter(thesis => !boardIds.has(thesis.id)).slice(0,2);
-      remainingTheses.innerHTML = '';
-      if(!free.length){
-        remainingTheses.innerHTML = '<div class="rest-card"><div class="rest-top"><strong>Keine offenen Restthesen</strong><span class="rest-badge">Board voll</span></div><span style="color:var(--muted)">Alle Thesen liegen aktuell auf dem Board.</span></div>';
-        return;
-      }
-      free.forEach((thesis, index) => {
-        const item = document.createElement('div');
-        item.className = 'rest-card' + (selectedId === thesis.id ? ' active' : '');
-        item.innerHTML = `<div class="rest-top"><strong>Restthese ${index + 1}</strong><span class="rest-badge">${scoreText(thesis.score)}</span></div><button type="button" class="list-btn" draggable="true"><span style="font-size:var(--text-sm);color:var(--text);display:block;text-align:left">${thesis.text}</span></button><button type="button" class="remove-thesis-btn">These entfernen</button>`;
-        const btn = item.querySelector('.list-btn');
-        btn.addEventListener('click', () => { selectedId = thesis.id; renderAll(); });
-        btn.addEventListener('dragstart', (event) => { event.dataTransfer.setData('text/plain', thesis.id); });
-        item.querySelector('.remove-thesis-btn').addEventListener('click', () => removeThesis(thesis.id));
-        remainingTheses.appendChild(item);
-      });
-    }
-
     function removeThesis(id){
       const thesisIndex = theses.findIndex(t => t.id === id);
       if(thesisIndex === -1) return;
@@ -825,10 +747,8 @@
       renderBoard();
       renderPlayers();
       renderList();
-      renderEditor();
       renderStatTable('tableAlman', almanStats);
       renderStatTable('tableAus', ausStats);
-      renderRemainingTheses();
       updateMeta();
       recomputeTeamScores();
       renderWheel();
@@ -859,18 +779,6 @@
       addThesis(text);
       newThesis.value = '';
       newThesis.focus();
-    });
-
-    saveBtn.addEventListener('click', () => {
-      const current = getThesis(selectedId);
-      if(!current) return;
-      current.text = selectedText.value.trim();
-      renderAll();
-    });
-
-    deleteBtn.addEventListener('click', () => {
-      if(!selectedId) return;
-      removeThesis(selectedId);
     });
 
     document.getElementById('clearBtn').addEventListener('click', () => {
@@ -1024,27 +932,6 @@
       };
       reader.readAsText(file);
       loadStateInput.value = '';
-    });
-
-    document.getElementById('fillDemoBtn').addEventListener('click', () => {
-      theses.splice(0, theses.length,
-        { id: 'd1', text: 'Heidenheim bleibt ohne Gegentor im Spiel gegen Pauli', score: -3 },
-        { id: 'd2', text: 'Drei Spiele werden nach Rückstand noch gedreht', score: -1 },
-        { id: 'd3', text: 'Im Derby fallen über 3,5 Tore', score: 0 },
-        { id: 'd4', text: 'Mindestens zwei Spiele enden mit Primzahl-Treffern', score: 3 },
-        { id: 'd5', text: 'Jens Playlist bringt mindestens einen Scorerpunkt', score: -1 },
-        { id: 'd6', text: 'Dortmund kassiert mindestens ein Gelb wegen Zeitspiel', score: 1 },
-        { id: 'd7', text: 'Ein Joker trifft in der Nachspielzeit', score: 3 },
-        { id: 'd8', text: 'Ein Keeper sammelt einen Assist', score: -3 }
-      );
-      Object.keys(placements).forEach(key => delete placements[key]);
-      figureImages.fill(null);
-      placements['pool-0']='d1'; placements['pool-1']='d2'; placements['pool-2']='d3'; placements['pool-3']='d4';
-      placements['pool-6']='d5'; placements['pool-7']='d6'; placements['top-field-3']='d7'; placements['bottom-field-0']='d8';
-      scoreAlman.value = 7;
-      scoreAus.value = 5;
-      selectedId = 'd1';
-      renderAll();
     });
 
     tryAutoload();
