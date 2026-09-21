@@ -55,7 +55,7 @@
     .player-grid{display:grid;grid-template-columns:1fr;gap:.5rem;max-height:26rem;overflow:auto;margin-top:1rem}.player-card{background:var(--surface-2);border:1px solid #2a2a2a;border-radius:var(--radius-lg);padding:.65rem;display:grid;grid-template-columns:auto 1fr;gap:.6rem;align-items:center}
     .player-empty{border-radius:.75rem;display:grid;place-items:center;color:var(--faint);background:#0d0d0d;border:1px dashed #333;font-size:var(--text-xs);text-align:center;padding:.85rem;grid-column:1/-1}
     .player-thumb{width:44px;height:44px;border-radius:50%;overflow:hidden;background:#0d0d0d;display:grid;place-items:center;flex-shrink:0}.player-thumb img{width:100%;height:100%;object-fit:cover}.player-thumb span{font-size:.65rem;color:var(--faint)}
-    .player-card strong{font-size:var(--text-sm)}.player-card span{font-size:var(--text-xs);color:var(--muted)}.player-drag{width:100%;text-align:left;cursor:grab;display:grid;gap:.18rem}.player-drag:active{cursor:grabbing}
+    .player-card strong{font-size:var(--text-sm)}.player-card span{font-size:var(--text-xs);color:var(--muted)}.player-drag{width:100%;text-align:left;cursor:grab;display:grid;gap:.18rem}.player-drag:active{cursor:grabbing}.player-name-input{width:100%;background:#0d0d0d;border:1px solid var(--border);border-radius:.4rem;padding:.3rem .45rem;font-size:var(--text-xs);color:var(--text)}
     .thesis-list{display:grid;gap:.65rem;max-height:20rem;overflow:auto;margin-top:1rem;padding-right:.15rem}.list-item{padding:.85rem;border-radius:var(--radius-lg);background:var(--surface-2);border:1px solid #2a2a2a}
     .list-item.active{outline:2px solid rgba(255,255,255,.45);outline-offset:2px}.list-btn{width:100%;text-align:left;cursor:grab}.list-btn:active{cursor:grabbing}.list-item strong{display:block;font-size:var(--text-sm);margin-bottom:.2rem}.list-item span{font-size:var(--text-sm);color:var(--muted);display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
     .editor-actions{display:flex;gap:.75rem;margin-top:1rem;flex-wrap:wrap}.rating-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:.5rem;margin-top:1rem}.rating-btn{min-height:52px;border-radius:var(--radius-md);font-weight:800;background:var(--surface-2);border:1px solid #303030}.rating-btn.active{background:#f0f0f0;color:#0d0d0d;border-color:transparent}
@@ -558,14 +558,27 @@
         const initial = (player.name || '?').trim().charAt(0).toUpperCase();
         card.innerHTML = `
           <div class="player-thumb">${player.image ? `<img src="${player.image}" alt="${player.name}" />` : `<span>${initial}</span>`}</div>
-          <button type="button" class="player-drag" draggable="true">
-            <strong>${player.name}</strong>
-            <span>${player.club}</span>
-          </button>
+          <div style="display:grid;gap:.3rem">
+            <button type="button" class="player-drag" draggable="true">
+              <strong class="player-name-display">${player.name}</strong>
+              <span>${player.club}</span>
+            </button>
+            <input class="player-name-input" type="text" value="${player.name}" placeholder="Name bearbeiten" />
+          </div>
         `;
-        const btn = card.querySelector('button');
+        const btn = card.querySelector('.player-drag');
         btn.addEventListener('dragstart', (event) => {
           event.dataTransfer.setData('application/player-id', player.id);
+        });
+        const nameInput = card.querySelector('.player-name-input');
+        const nameDisplay = card.querySelector('.player-name-display');
+        nameInput.addEventListener('input', (event) => {
+          player.name = event.target.value;
+          nameDisplay.textContent = event.target.value;
+          autosave();
+        });
+        nameInput.addEventListener('blur', () => {
+          renderPlayers();
         });
         playerGrid.appendChild(card);
       });
