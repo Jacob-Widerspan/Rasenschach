@@ -819,18 +819,6 @@
       figurePlayerIds.fill(null);
       figureLabels.splice(0, figureLabels.length, ...defaultFigureLabels);
       Object.keys(fieldResults).forEach(key => delete fieldResults[key]);
-      almanStats.splice(0, almanStats.length,
-        { player: 'Moritz', punkte: '' },
-        { player: 'Kevin', punkte: '' },
-        { player: 'Fischer', punkte: '' },
-        { player: 'Philipp', punkte: '' }
-      );
-      ausStats.splice(0, ausStats.length,
-        { player: 'Lukas', punkte: '' },
-        { player: 'Johannes', punkte: '' },
-        { player: 'David', punkte: '' },
-        { player: 'Elias', punkte: '' }
-      );
       scoreAlman.value = 0;
       scoreAus.value = 0;
       questionFieldResult = '?';
