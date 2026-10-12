@@ -266,7 +266,7 @@
 
         <section class="side-card">
           <h3>Thesenliste</h3>
-          <p>Jede These lässt sich aus Pool oder Liste auf die Teamfelder ziehen.</p>
+          <p>These antippen, dann das Zielfeld antippen – oder die These direkt mit dem Finger ziehen.</p>
           <div class="thesis-list" id="thesisList"></div>
         </section>
       </aside>
@@ -437,24 +437,97 @@
       } catch (error) {}
     }
 
+    function placeThesis(id, placeId){
+      if (!getThesis(id)) return;
+      const from = locationOf(id);
+      if (from === placeId) return;
+      const existing = placements[placeId];
+      if (from) delete placements[from];
+      placements[placeId] = id;
+      if (existing && from) placements[from] = existing;
+      selectedId = null;
+      renderAll();
+    }
+
+    let suppressThesisClickUntil = 0;
+
+    function attachThesisSource(btn, id){
+      btn.style.touchAction = 'none';
+      btn.style.webkitUserSelect = 'none';
+      btn.addEventListener('click', event => {
+        event.stopPropagation();
+        if (Date.now() < suppressThesisClickUntil) return;
+        selectedId = selectedId === id ? null : id;
+        renderAll();
+      });
+      btn.addEventListener('dragstart', event => {
+        event.dataTransfer.setData('text/plain', id);
+        event.dataTransfer.effectAllowed = 'move';
+      });
+      let gesture = null;
+      const clear = () => document.querySelectorAll('.drop.dragover').forEach(n => n.classList.remove('dragover'));
+      const targetAt = t => document.elementFromPoint(t.clientX, t.clientY)?.closest('.drop[data-place-id]');
+      btn.addEventListener('touchstart', event => {
+        if (event.touches.length !== 1) return;
+        event.preventDefault();
+        const t = event.touches[0];
+        gesture = { x:t.clientX, y:t.clientY, moved:false, ghost:null };
+      }, {passive:false});
+      btn.addEventListener('touchmove', event => {
+        if (!gesture || event.touches.length !== 1) return;
+        event.preventDefault();
+        const t = event.touches[0];
+        if (Math.hypot(t.clientX-gesture.x, t.clientY-gesture.y) > 8) gesture.moved = true;
+        if (!gesture.moved) return;
+        if (!gesture.ghost){
+          gesture.ghost = document.createElement('div');
+          gesture.ghost.textContent = getThesis(id)?.text || '';
+          Object.assign(gesture.ghost.style, {position:'fixed',pointerEvents:'none',zIndex:'9999',width:'180px',padding:'12px',background:'#222',color:'#fff',border:'2px solid #8c71ff',borderRadius:'12px',opacity:'.9',fontSize:'14px'});
+          document.body.appendChild(gesture.ghost);
+        }
+        gesture.ghost.style.left = `${t.clientX-90}px`;
+        gesture.ghost.style.top = `${t.clientY-60}px`;
+        clear();
+        targetAt(t)?.classList.add('dragover');
+      }, {passive:false});
+      btn.addEventListener('touchend', event => {
+        if (!gesture) return;
+        event.preventDefault();
+        suppressThesisClickUntil = Date.now()+700;
+        const current = gesture;
+        gesture = null;
+        const target = event.changedTouches[0] && targetAt(event.changedTouches[0]);
+        current.ghost?.remove();
+        clear();
+        if (current.moved){
+          if (target) placeThesis(id, target.dataset.placeId);
+        } else {
+          selectedId = selectedId === id ? null : id;
+          renderAll();
+        }
+      }, {passive:false});
+      btn.addEventListener('touchcancel', () => {
+        gesture?.ghost?.remove();
+        gesture = null;
+        clear();
+        suppressThesisClickUntil = Date.now()+700;
+      });
+    }
+
     function attachDrop(node, placeId){
       node.classList.add('drop');
-      node.addEventListener('dragover', (event) => { event.preventDefault(); node.classList.add('dragover'); });
+      node.dataset.placeId = placeId;
+      node.addEventListener('dragover', event => { event.preventDefault(); node.classList.add('dragover'); });
       node.addEventListener('dragleave', () => node.classList.remove('dragover'));
-      node.addEventListener('drop', (event) => {
+      node.addEventListener('drop', event => {
         event.preventDefault();
         node.classList.remove('dragover');
-        const playerId = event.dataTransfer.getData('application/player-id');
-        if (playerId) return;
-        const id = event.dataTransfer.getData('text/plain');
-        if(!id) return;
-        const from = locationOf(id);
-        if(from) delete placements[from];
-        const existing = placements[placeId];
-        placements[placeId] = id;
-        if(existing && from) placements[from] = existing;
-        selectedId = id;
-        renderAll();
+        if (event.dataTransfer.getData('application/player-id')) return;
+        placeThesis(event.dataTransfer.getData('text/plain'), placeId);
+      });
+      node.addEventListener('click', event => {
+        if (Date.now() < suppressThesisClickUntil || event.target.closest('button,input,textarea,select')) return;
+        if (selectedId) placeThesis(selectedId, placeId);
       });
     }
 
@@ -545,8 +618,7 @@
         : `<div class="thesis-card placeholder">Freies Thesenfeld</div>`;
       if(thesis){
         const btn = cell.querySelector('button');
-        btn.addEventListener('click', () => { selectedId = thesis.id; renderAll(); });
-        btn.addEventListener('dragstart', (event) => { event.dataTransfer.setData('text/plain', thesis.id); });
+        attachThesisSource(btn, thesis.id);
       }
       attachDrop(cell, placeId);
       return cell;
@@ -622,8 +694,7 @@
         item.className = 'list-item' + (selectedId === thesis.id ? ' active' : '');
         item.innerHTML = `<button type="button" class="list-btn" draggable="true"><strong>${scoreText(thesis.score)} · ${locationOf(thesis.id) || 'Pool/Liste'}</strong><span>${thesis.text}</span></button><button type="button" class="remove-thesis-btn">These entfernen</button>`;
         const btn = item.querySelector('.list-btn');
-        btn.addEventListener('click', () => { selectedId = thesis.id; renderAll(); });
-        btn.addEventListener('dragstart', (event) => { event.dataTransfer.setData('text/plain', thesis.id); });
+        attachThesisSource(btn, thesis.id);
         item.querySelector('.remove-thesis-btn').addEventListener('click', () => removeThesis(thesis.id));
         thesisList.appendChild(item);
       });
