@@ -1,0 +1,51 @@
+name: Repair iPad player image placement
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/repair-ipad-player-drop.yml]
+  workflow_dispatch:
+permissions:
+  contents: write
+  pages: write
+concurrency:
+  group: repair-ipad-player-drop
+  cancel-in-progress: false
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Patch player image placement
+        run: |
+          python <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text()
+          if 'function attachPlayerSource(' not in s:
+              marker = '    function renderPlayers(){'
+              old = "        btn.addEventListener('dragstart', (event) => {\n          event.dataTransfer.setData('application/player-id', player.id);\n        });"
+              if s.count(marker) != 1 or s.count(old) != 1:
+                  raise RuntimeError('Unexpected player code; refusing to write')
+              helper = '\n' + '''let selectedPlayerId = null;let suppressPlayerClickUntil = 0;function figureIndexAt(element){const cell = element?.closest('.figure-cell');if (!cell) return -1;const parent = cell.parentElement;const offset = parent.id === 'topFigures' ? 0 : parent.id === 'bottomFigures' ? 5 : -1;return offset < 0 ? -1 : offset + Array.from(parent.children).indexOf(cell);}function selectPlayer(id){selectedPlayerId = selectedPlayerId === id ? null : id;selectedId = null;document.querySelectorAll('[data-touch-player]').forEach(node => {const active = node.dataset.touchPlayer === selectedPlayerId;node.style.outline = active ? '2px solid #8c71ff' : '';node.setAttribute('aria-pressed', String(active));});renderList();}function placeTouchPlayer(id, index){const player = players.find(p => p.id === id);if (!player || index < 0 || index > 9) return;selectedPlayerId = null;selectedId = null;updateFigureFromPlayer(index, player);}document.addEventListener('click', event => {if (event.target.closest('.thesis-card,.list-btn,#clearBtn')) selectedPlayerId = null;if (!selectedPlayerId || selectedId || Date.now() < suppressPlayerClickUntil) return;if (event.target.closest('button,input,textarea,select')) return;const index = figureIndexAt(event.target);if (index < 0) return;event.preventDefault();event.stopPropagation();placeTouchPlayer(selectedPlayerId, index);}, true);loadStateInput.addEventListener('change', () => { selectedPlayerId = null; });function attachPlayerSource(node, player){node.dataset.touchPlayer = player.id;node.draggable = true;node.style.touchAction = 'none';node.style.webkitUserSelect = 'none';node.style.outline = selectedPlayerId === player.id ? '2px solid #8c71ff' : '';node.querySelectorAll('img').forEach(img => { img.draggable = false; });node.addEventListener('dragstart', event => {event.dataTransfer.setData('application/player-id', player.id);event.dataTransfer.effectAllowed = 'copy';});node.addEventListener('click', event => {event.stopPropagation();if (Date.now() < suppressPlayerClickUntil) return;selectPlayer(player.id);});let gesture = null;const clear = () => document.querySelectorAll('.figure-cell.dragover').forEach(n => n.classList.remove('dragover'));const cleanup = () => { gesture?.ghost?.remove(); gesture = null; clear(); };node.addEventListener('touchstart', event => {if (event.touches.length !== 1){ cleanup(); return; }event.preventDefault();const t = event.touches[0];gesture = { x:t.clientX, y:t.clientY, moved:false, ghost:null };}, {passive:false});node.addEventListener('touchmove', event => {if (!gesture) return;if (event.touches.length !== 1){ cleanup(); return; }event.preventDefault();const t = event.touches[0];if (Math.hypot(t.clientX-gesture.x, t.clientY-gesture.y) > 8) gesture.moved = true;if (!gesture.moved) return;if (!gesture.ghost){gesture.ghost = document.createElement('div');Object.assign(gesture.ghost.style, {position:'fixed',pointerEvents:'none',zIndex:'9999',width:'100px',padding:'6px',background:'#222',color:'#fff',border:'2px solid #8c71ff',borderRadius:'12px',opacity:'.9'});if (player.image){const img = document.createElement('img');img.src = player.image;img.alt = player.name;Object.assign(img.style, {width:'100%',height:'80px',objectFit:'cover'});gesture.ghost.appendChild(img);}const name = document.createElement('div');name.textContent = player.name;gesture.ghost.appendChild(name);document.body.appendChild(gesture.ghost);}gesture.ghost.style.left = `${t.clientX-50}px`;gesture.ghost.style.top = `${t.clientY-70}px`;clear();document.elementFromPoint(t.clientX,t.clientY)?.closest('.figure-cell')?.classList.add('dragover');}, {passive:false});node.addEventListener('touchend', event => {if (!gesture) return;event.preventDefault();suppressPlayerClickUntil = Date.now()+700;const moved = gesture.moved;const t = event.changedTouches[0];const index = t ? figureIndexAt(document.elementFromPoint(t.clientX,t.clientY)) : -1;cleanup();if (moved){if (index >= 0) placeTouchPlayer(player.id, index);} else selectPlayer(player.id);}, {passive:false});node.addEventListener('touchcancel', () => { cleanup(); suppressPlayerClickUntil = Date.now()+700; });}''' + '\n'
+              s = s.replace(marker, helper + marker, 1)
+              s = s.replace(old, "        attachPlayerSource(btn, player);\n        attachPlayerSource(card.querySelector('.player-thumb'), player);", 1)
+              s = s.replace('Bilder hochladen, Spieler suchen und auf die Figurenfelder ziehen.', 'Bilder hochladen und mit dem Finger auf die Figurenfelder ziehen – oder Bild antippen, dann Figurenfeld antippen.')
+              p.write_text(s)
+          Path('/tmp/rasenschach-check.js').write_text(s.split('<script>')[1].split('</script>')[0])
+          PY
+          node --check /tmp/rasenschach-check.js
+      - name: Commit repair and request Pages rebuild
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if ! git diff --quiet -- index.html; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add index.html
+            git commit -m "Fix iPad player image dragging and tap placement"
+            git push origin HEAD:main
+          fi
+          gh api --method POST repos/Jacob-Widerspan/Rasenschach/pages/builds
