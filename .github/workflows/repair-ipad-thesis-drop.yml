@@ -1,0 +1,154 @@
+name: Repair iPad thesis placement
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/repair-ipad-thesis-drop.yml]
+  workflow_dispatch:
+permissions:
+  contents: write
+  pages: write
+concurrency:
+  group: repair-ipad-thesis-drop
+  cancel-in-progress: false
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Verify GitHub Pages source
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh api repos/Jacob-Widerspan/Rasenschach/pages > /tmp/pages.json
+          python -c "import json; p=json.load(open('/tmp/pages.json')); assert p.get('source',{}).get('branch') == 'main' and p.get('source',{}).get('path') == '/', 'Pages source is not main/root; stopping without changes'"
+      - name: Patch thesis placement
+        run: |
+          python <<'PY'
+          from pathlib import Path
+          import re
+          p = Path('index.html')
+          s = p.read_text()
+          if 'function attachThesisSource(' not in s:
+              a = s.index('    function attachDrop(')
+              b = s.index('    function displayFieldLabel', a)
+              fix = '''    function placeThesis(id, placeId){
+                if (!getThesis(id)) return;
+                const from = locationOf(id);
+                if (from === placeId) return;
+                const existing = placements[placeId];
+                if (from) delete placements[from];
+                placements[placeId] = id;
+                if (existing && from) placements[from] = existing;
+                selectedId = null;
+                renderAll();
+              }
+
+              let suppressThesisClickUntil = 0;
+
+              function attachThesisSource(btn, id){
+                btn.style.touchAction = 'none';
+                btn.style.webkitUserSelect = 'none';
+                btn.addEventListener('click', event => {
+                  event.stopPropagation();
+                  if (Date.now() < suppressThesisClickUntil) return;
+                  selectedId = selectedId === id ? null : id;
+                  renderAll();
+                });
+                btn.addEventListener('dragstart', event => {
+                  event.dataTransfer.setData('text/plain', id);
+                  event.dataTransfer.effectAllowed = 'move';
+                });
+                let gesture = null;
+                const clear = () => document.querySelectorAll('.drop.dragover').forEach(n => n.classList.remove('dragover'));
+                const targetAt = t => document.elementFromPoint(t.clientX, t.clientY)?.closest('.drop[data-place-id]');
+                btn.addEventListener('touchstart', event => {
+                  if (event.touches.length !== 1) return;
+                  event.preventDefault();
+                  const t = event.touches[0];
+                  gesture = { x:t.clientX, y:t.clientY, moved:false, ghost:null };
+                }, {passive:false});
+                btn.addEventListener('touchmove', event => {
+                  if (!gesture || event.touches.length !== 1) return;
+                  event.preventDefault();
+                  const t = event.touches[0];
+                  if (Math.hypot(t.clientX-gesture.x, t.clientY-gesture.y) > 8) gesture.moved = true;
+                  if (!gesture.moved) return;
+                  if (!gesture.ghost){
+                    gesture.ghost = document.createElement('div');
+                    gesture.ghost.textContent = getThesis(id)?.text || '';
+                    Object.assign(gesture.ghost.style, {position:'fixed',pointerEvents:'none',zIndex:'9999',width:'180px',padding:'12px',background:'#222',color:'#fff',border:'2px solid #8c71ff',borderRadius:'12px',opacity:'.9',fontSize:'14px'});
+                    document.body.appendChild(gesture.ghost);
+                  }
+                  gesture.ghost.style.left = `${t.clientX-90}px`;
+                  gesture.ghost.style.top = `${t.clientY-60}px`;
+                  clear();
+                  targetAt(t)?.classList.add('dragover');
+                }, {passive:false});
+                btn.addEventListener('touchend', event => {
+                  if (!gesture) return;
+                  event.preventDefault();
+                  suppressThesisClickUntil = Date.now()+700;
+                  const current = gesture;
+                  gesture = null;
+                  const target = event.changedTouches[0] && targetAt(event.changedTouches[0]);
+                  current.ghost?.remove();
+                  clear();
+                  if (current.moved){
+                    if (target) placeThesis(id, target.dataset.placeId);
+                  } else {
+                    selectedId = selectedId === id ? null : id;
+                    renderAll();
+                  }
+                }, {passive:false});
+                btn.addEventListener('touchcancel', () => {
+                  gesture?.ghost?.remove();
+                  gesture = null;
+                  clear();
+                  suppressThesisClickUntil = Date.now()+700;
+                });
+              }
+
+              function attachDrop(node, placeId){
+                node.classList.add('drop');
+                node.dataset.placeId = placeId;
+                node.addEventListener('dragover', event => { event.preventDefault(); node.classList.add('dragover'); });
+                node.addEventListener('dragleave', () => node.classList.remove('dragover'));
+                node.addEventListener('drop', event => {
+                  event.preventDefault();
+                  node.classList.remove('dragover');
+                  if (event.dataTransfer.getData('application/player-id')) return;
+                  placeThesis(event.dataTransfer.getData('text/plain'), placeId);
+                });
+                node.addEventListener('click', event => {
+                  if (Date.now() < suppressThesisClickUntil || event.target.closest('button,input,textarea,select')) return;
+                  if (selectedId) placeThesis(selectedId, placeId);
+                });
+              }
+
+          '''
+              s = s[:a] + fix + s[b:]
+              pattern = r"btn\.addEventListener\('click', \(\) => \{ selectedId = thesis\.id; renderAll\(\); \}\);\s*btn\.addEventListener\('dragstart', \(event\) => \{ event\.dataTransfer\.setData\('text/plain', thesis\.id\); \}\);"
+              s, count = re.subn(pattern, 'attachThesisSource(btn, thesis.id);', s)
+              if count != 2:
+                  raise RuntimeError('Unexpected source layout; refusing to write')
+              s = s.replace('Jede These lässt sich aus Pool oder Liste auf die Teamfelder ziehen.', 'These antippen, dann das Zielfeld antippen – oder die These direkt mit dem Finger ziehen.')
+              p.write_text(s)
+          Path('/tmp/rasenschach-check.js').write_text(s.split('<script>')[1].split('</script>')[0])
+          PY
+          node --check /tmp/rasenschach-check.js
+      - name: Commit repair and request Pages rebuild
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if ! git diff --quiet -- index.html; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add index.html
+            git commit -m "Fix iPad thesis drag-and-drop and tap placement"
+            git push origin HEAD:main
+          fi
+          gh api --method POST repos/Jacob-Widerspan/Rasenschach/pages/builds
